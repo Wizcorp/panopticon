@@ -1,0 +1,88 @@
+/** @module TimedSample */
+var Average = require('./Average');
+var StandardDeviation = require('./StandardDeviation');
+
+/**
+ * Timed sample object constructor.
+ *
+ * @param {Number[]} dt Takes the output of a diff produced by feeding the result of one hrtime as the parameter to another.
+ * @param {Object} persistObj Emits reset events. An instance of timed sample belongs to this object.
+ * @param {Boolean} logType Log type information.
+ * @param {Number} scaleFactor The scale factor for time calculations. 1 -> 1kHz, 1000 -> 1Hz.
+ * @constructor
+ * @alias module:TimedSample
+ */
+function TimedSample(dt, persistObj, logType, scaleFactor) {
+	var time = (dt[0] + dt[1] / 1e9) * 1000 / scaleFactor;
+
+	this.scaleFactor = scaleFactor;
+	this.min = time;
+	this.max = time;
+	this.sigma = new StandardDeviation(time);
+	this.average = new Average(time);
+	this.logType = logType;
+
+	if (persistObj) {
+		var that = this;
+
+		persistObj.on('reset', function () {
+			that.reset();
+		});
+	}
+}
+
+
+/**
+ * Add a time sample.
+ *
+ * @param  {Number[]} dt Add an hrtime difference sample.
+ */
+TimedSample.prototype.update = function (dt) {
+	var time = (dt[0] + dt[1] / 1e9) * 1000 / this.scaleFactor;
+	this.min = Number.isFinite(this.min) ? Math.min(this.min, time) : time;
+	this.max = Number.isFinite(this.max) ? Math.max(this.max, time) : time;
+
+	if (!this.hasOwnProperty('sigma')) {
+		this.sigma = new StandardDeviation(time);
+	} else {
+		this.sigma.addMeasurement(time);
+	}
+
+	if (!this.hasOwnProperty('average')) {
+		this.average = new Average(time);
+	} else {
+		this.average.addMeasurement(time);
+	}
+};
+
+
+/**
+ * If we are persisting, then this is used to put the TimedSample back into an uninitialised state.
+ */
+TimedSample.prototype.reset = function () {
+	this.min = null;
+	this.max = null;
+	this.sigma = null;
+	this.average = null;
+};
+
+
+/**
+ * Returns the content of this without the scaleFactor included.
+ *
+ * @return {Object}
+ */
+TimedSample.prototype.toJSON = function () {
+	var toReturn = {
+		min: this.min,
+		max: this.max,
+		sigma: this.sigma,
+		average: this.average,
+		scaleFactor: this.scaleFactor
+	};
+
+	return (this.logType) ? { type: 'timedSample', value: toReturn } : toReturn;
+};
+
+
+module.exports = TimedSample;
