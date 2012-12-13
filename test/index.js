@@ -41,7 +41,7 @@ function handleAssert(assertFunc, args, message) {
 		if (e.name !== 'AssertionError') {
 			throw e;
 		}
-		
+
 		redLog('✗', message, 'expected\n' + JSON.stringify(e.expected, null, '  ') + '\nbut got\n' + JSON.stringify(e.actual, null, '  '));
 		shutdown(1);
 	}
@@ -98,7 +98,7 @@ function statisticsTests() {
 		handleAssert(assert.strictEqual, [actual, expected], 'twoSamplesSigmaAfterParse');
 
 		var testArray = [];
-		for (var i = 0; i < samples; i++) {
+		for (var i = 0; i < samples; i += 1) {
 			testArray.push(Math.random() * 100 - 50);
 		}
 
@@ -137,7 +137,7 @@ function statisticsTests() {
 
 		// Test 1. Trivial averaging.
 		var testArray = [];
-		for (i = 0; i < length; i++) {
+		for (i = 0; i < length; i += 1) {
 			testArray[i] = Math.random() * 100 - 50;
 		}
 
@@ -146,7 +146,7 @@ function statisticsTests() {
 		}, 0) / length;
 
 		var average = new Average(testArray[0]);
-		for (i = 1; i < length; i++) {
+		for (i = 1; i < length; i += 1) {
 			average.addMeasurement(testArray[i]);
 		}
 
