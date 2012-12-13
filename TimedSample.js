@@ -42,13 +42,13 @@ TimedSample.prototype.update = function (dt) {
 	this.min = Number.isFinite(this.min) ? Math.min(this.min, time) : time;
 	this.max = Number.isFinite(this.max) ? Math.max(this.max, time) : time;
 
-	if (!this.hasOwnProperty('sigma')) {
+	if (!this.sigma) {
 		this.sigma = new StandardDeviation(time);
 	} else {
 		this.sigma.addMeasurement(time);
 	}
 
-	if (!this.hasOwnProperty('average')) {
+	if (!this.average) {
 		this.average = new Average(time);
 	} else {
 		this.average.addMeasurement(time);

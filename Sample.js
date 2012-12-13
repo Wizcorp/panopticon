@@ -37,13 +37,13 @@ Sample.prototype.update = function (val) {
 	this.min = this.hasOwnProperty('min') ? Math.min(this.min, val) : val;
 	this.max = this.hasOwnProperty('max') ? Math.max(this.max, val) : val;
 
-	if (!this.hasOwnProperty('sigma')) {
+	if (!this.sigma) {
 		this.sigma = new StandardDeviation(val);
 	} else {
 		this.sigma.addMeasurement(val);
 	}
 
-	if (!this.hasOwnProperty('average')) {
+	if (!this.average) {
 		this.average = new Average(val);
 	} else {
 		this.average.addMeasurement(val);
