@@ -236,7 +236,7 @@ function masterSetup(thisObj) {
 		worker.on('message', onMessage);
 
 		// If a worker dies, release listener.
-		worker.on('exit', function () {
+		worker.once('exit', function () {
 			worker.removeListener('message', onMessage);
 		});
 	}
