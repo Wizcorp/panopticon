@@ -19,6 +19,7 @@ var instanceCount = 0;
  * @param {Object} thisObj The scope to operate on.
  * @private
  */
+
 function resetData(thisObj) {
 	if (thisObj.persist) {
 		thisObj.emit('reset');
@@ -38,6 +39,7 @@ function resetData(thisObj) {
  * @param {Object} thisObj The scope to operate on.
  * @private
  */
+
 function timeUp(thisObj) {
 	var now = Date.now();
 
@@ -88,6 +90,7 @@ function timeUp(thisObj) {
  * @param value The value to be used by the Set, Inc or Sample at the end of the path/key chain.
  * @private
  */
+
 function augment(thisObj, DataConstructor, path, id, value) {
 	var data = thisObj.data;
 
@@ -131,6 +134,7 @@ function augment(thisObj, DataConstructor, path, id, value) {
  * @param {Boolean} logType Are we logging type informaiton?
  * @private
  */
+
 function genericSetup(thisObj, startTime, interval, scaleFactor, persist, logType) {
 	// Create a data container
 	resetData(thisObj);
@@ -153,7 +157,7 @@ function genericSetup(thisObj, startTime, interval, scaleFactor, persist, logTyp
 
 	// If startTime is before now, we need to add an interval so that the first end time is in the
 	// future. If not, we just add the offset to now.
-	thisObj.endTime = now + offset + (offset < 0) ? thisObj.interval : 0;
+	thisObj.endTime = now + offset + ((offset < 0) ? thisObj.interval : 0);
 
 	// Start the timer.
 	thisObj.timer = null;
@@ -171,6 +175,7 @@ function genericSetup(thisObj, startTime, interval, scaleFactor, persist, logTyp
  * @param {Object} thisObj The scope to operate on.
  * @private
  */
+
 function initAggregate(thisObj) {
 	thisObj.aggregated = {
 		id: thisObj.id,
@@ -187,6 +192,7 @@ function initAggregate(thisObj) {
  * @param {Object} thisObj The scope to operate on.
  * @private
  */
+
 function setupDelivery(thisObj) {
 	// Wait half an interval before beginning the delivery interval.
 	var beginReporting = thisObj.endTime + thisObj.interval / 2;
@@ -212,6 +218,7 @@ function setupDelivery(thisObj) {
  * @param {Object} thisObj The scope to operate on.
  * @private
  */
+
 function masterSetup(thisObj) {
 	// Create the basic aggregate object.
 	initAggregate(thisObj);
@@ -254,6 +261,7 @@ function masterSetup(thisObj) {
  * @param {Object} thisObj The scope to operate on.
  * @private
  */
+
 function workerSetup(thisObj) {
 	thisObj.on('sample', function (data, id) {
 		process.send({ event: 'workerSample', sample: data, id: id });
@@ -274,6 +282,7 @@ function workerSetup(thisObj) {
  * @extends EventEmitter
  * @alias module:Panopticon
  */
+
 function Panopticon(startTime, interval, scaleFactor, persist, logType) {
 	EventEmitter.call(this);
 
@@ -293,6 +302,7 @@ function Panopticon(startTime, interval, scaleFactor, persist, logType) {
 
 util.inherits(Panopticon, EventEmitter);
 
+
 /**
  * Take a sample for which the min, max, average and standard deviation are relevant and calculate
  * these before insertion into the workerData object.
@@ -301,6 +311,7 @@ util.inherits(Panopticon, EventEmitter);
  * @param {String} id A key to assign data to within the address defined by path.
  * @param {Number} n The number to sample.
  */
+
 Panopticon.prototype.sample = function (path, id, n) {
 	if (!Number.isFinite(n)) {
 		return;
@@ -308,6 +319,7 @@ Panopticon.prototype.sample = function (path, id, n) {
 
 	augment(this, SampleLog, path, id, n);
 };
+
 
 /**
  * Use the Δt array representing the difference between two readings process.hrtime():
@@ -317,6 +329,7 @@ Panopticon.prototype.sample = function (path, id, n) {
  * @param {String} id A key to assign data to within the address defined by path.
  * @param {Number[]} dt Output from process.hrtime().
  */
+
 Panopticon.prototype.timedSample = function (path, id, dt) {
 	if (!Array.isArray(dt)) {
 		return;
@@ -324,6 +337,7 @@ Panopticon.prototype.timedSample = function (path, id, dt) {
 
 	augment(this, TimedSampleLog, path, id, dt);
 };
+
 
 /**
  * Take a counter and increment by n if given or 1. Set up the counter if it does not already exist
@@ -333,9 +347,11 @@ Panopticon.prototype.timedSample = function (path, id, dt) {
  * @param {String} id A key to assign data to within the address defined by path.
  * @param {Number} n Increment the addressed data by n. If this is the initial increment, treat the addressed data as 0.
  */
+
 Panopticon.prototype.inc = function (path, id, n) {
 	augment(this, IncLog, path, id, n);
 };
+
 
 /**
  * Create or overwrite a field in the workerData object.
@@ -344,14 +360,20 @@ Panopticon.prototype.inc = function (path, id, n) {
  * @param {String} id A key to assign data to.
  * @param n Data to set. This is not restricted to numbers.
  */
+
+
 Panopticon.prototype.set = function (path, id, n) {
 	augment(this, SetLog, path, id, n);
 };
 
+
 /**
- * Clears the interval and the timeout.
+ * Clears the interval and the timeout. Removes listeners on a panopticon.
  */
+
 Panopticon.prototype.stop = function () {
+	this.removeAllListeners();
+
 	clearTimeout(this.halfInterval);
 	this.halfInterval = null;
 
@@ -362,14 +384,17 @@ Panopticon.prototype.stop = function () {
 	this.timer = null;
 };
 
+
 /**
  * Static method returns the number of panoptica instances.
  *
  * @return {Number}
  */
+
 Panopticon.count = function () {
 	return instanceCount;
 };
 
 
+// This is a constructor-module, so the only thing on module.exports is the constructor itself.
 module.exports = Panopticon;
