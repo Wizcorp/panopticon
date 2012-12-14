@@ -97,10 +97,6 @@ function augment(thisObj, DataConstructor, path, id, value) {
 	if (path) {
 		var i, len = path.length;
 
-		if (len === 0) {
-			return;
-		}
-
 		for (i = 0; i < len; i += 1) {
 			var step = path[i];
 
