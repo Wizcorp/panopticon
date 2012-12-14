@@ -46,7 +46,7 @@ Inc.prototype.update = function (val) {
 Inc.prototype.toJSON = function () {
 	var toReturn = this.scaleFactor * this.value / this.interval;
 
-	return (this.logType) ? { type: 'inc', value: toReturn } : toReturn;
+	return this.logType ? { type: 'inc', value: toReturn } : toReturn;
 };
 
 

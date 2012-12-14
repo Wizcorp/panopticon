@@ -32,7 +32,7 @@ Set.prototype.update = function (val) {
  * @return Returns the stored value, with optional type information.
  */
 Set.prototype.toJSON = function () {
-	return (this.logType) ? { type: 'set', value: this.value } : this.value;
+	return this.logType ? { type: 'set', value: this.value } : this.value;
 };
 
 

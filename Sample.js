@@ -75,7 +75,7 @@ Sample.prototype.toJSON = function () {
 		average: this.average
 	};
 
-	return (this.logType) ? { type: 'sample', value: toReturn } : toReturn;
+	return this.logType ? { type: 'sample', value: toReturn } : toReturn;
 };
 
 

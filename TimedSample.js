@@ -81,7 +81,7 @@ TimedSample.prototype.toJSON = function () {
 		scaleFactor: this.scaleFactor
 	};
 
-	return (this.logType) ? { type: 'timedSample', value: toReturn } : toReturn;
+	return this.logType ? { type: 'timedSample', value: toReturn } : toReturn;
 };
 
 

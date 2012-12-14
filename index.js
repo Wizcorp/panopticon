@@ -157,7 +157,7 @@ function genericSetup(thisObj, startTime, interval, scaleFactor, persist, logTyp
 
 	// If startTime is before now, we need to add an interval so that the first end time is in the
 	// future. If not, we just add the offset to now.
-	thisObj.endTime = now + offset + ((offset < 0) ? thisObj.interval : 0);
+	thisObj.endTime = now + offset + (offset < 0 ? thisObj.interval : 0);
 
 	// Start the timer.
 	thisObj.timer = null;
