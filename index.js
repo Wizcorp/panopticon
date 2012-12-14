@@ -221,14 +221,30 @@ function masterSetup(thisObj) {
 		thisObj.aggregated.master = data;
 	});
 
-	// Collect samples emitted by workers.
-	Object.keys(cluster.workers).forEach(function (workerId) {
-		cluster.workers[workerId].on('message', function (message) {
+	// Create listeners for messages from workers, both for existing workers and workers that are
+	// spawned in the future.
+	function setupMessageHandler(worker) {
+		function onMessage(message) {
 			if (message.event === 'workerSample' && message.id === thisObj.id) {
-				thisObj.aggregated.workers[workerId] = message.sample;
+				thisObj.aggregated.workers[worker.id] = message.sample;
 			}
+		}
+
+		worker.on('message', onMessage);
+
+		// If a worker dies, release listener.
+		worker.on('exit', function () {
+			worker.removeListener('message', onMessage);
 		});
+	}
+
+	// Collect samples emitted by existing workers.
+	Object.keys(cluster.workers).forEach(function (workerId) {
+		setupMessageHandler(cluster.workers[workerId]);
 	});
+
+	// If a new worker is spawned, listen to it.
+	cluster.on('fork', setupMessageHandler);
 }
 
 
