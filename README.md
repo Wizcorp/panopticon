@@ -62,7 +62,7 @@ var server = require('http').createServer(function (req, res) {
 });
 ```
 Now after ten requests in an interval, the panopticon master will make an object available via its `query` method. If no path is given it assumes that you want a full report. With logType off you'll get something like:
-```javascript
+```json
 {
     "id": 0,
     "interval": 2500,
@@ -74,7 +74,7 @@ Now after ten requests in an interval, the panopticon master will make an object
             },
             "endTime": 1355724705625
         }
-    }
+    },
     "master": {
         "endTime": 1355724705625
     }
@@ -82,7 +82,7 @@ Now after ten requests in an interval, the panopticon master will make an object
 ```
 
 `endTime` is inserted by default for each worker and the master, and is a UNIX time in milliseconds. For the cluster, the default values or `id`, `interval`, and `numWorkers` are always present. The `id` becomes important when running concurrent panoptica so that they might be differentiated. This example has one worker, and it appears that requests are only sent to it, and not the master. We told panopticon to increment the `request` key of the `http` subobject, and that's what it did. If the logType is turned on, then this subobject becomes:
-```javascript
+```json
 "http": {
     "request": {
         "type": "inc",

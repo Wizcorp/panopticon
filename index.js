@@ -175,8 +175,7 @@ function genericSetup(thisObj, startTime, interval, scaleFactor, persist, logTyp
 function initAggregate(thisObj) {
 	thisObj.aggregated = {
 		id: thisObj.id,
-		interval: thisObj.interval,
-		numWorkers: Object.keys(cluster.workers).length,
+		interval: thisObj.interval / thisObj.scaleFactor,
 		workers: {}
 	};
 }
@@ -219,9 +218,10 @@ function masterSetup(thisObj) {
 	// Create the basic aggregate object.
 	initAggregate(thisObj);
 
-	// Collect samples emitted by master.
+	// Collect samples emitted by master. These are stringified and parsed because the workers went
+	// through the same process. For consistency.
 	thisObj.on('sample', function (data) {
-		thisObj.aggregated.master = data;
+		thisObj.aggregated.master = JSON.parse(JSON.stringify(data));
 	});
 
 	// Create listeners for messages from workers, both for existing workers and workers that are
