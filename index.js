@@ -167,6 +167,7 @@ function genericSetup(thisObj, startTime, interval, scaleFactor, persist, logTyp
 
 /**
  * For master only. This object will contain the aggregated data from the master and the workers.
+ * This may later be extended to allow dynamic logging of cluster data.
  *
  * @param {Object} thisObj The scope to operate on.
  * @private
@@ -176,6 +177,7 @@ function initAggregate(thisObj) {
 	thisObj.aggregated = {
 		id: thisObj.id,
 		interval: thisObj.interval / thisObj.scaleFactor,
+		numWorkers: new SetLog(Object.keys(cluster.workers).length, thisObj.persist, thisObj.logType),
 		workers: {}
 	};
 }
