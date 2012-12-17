@@ -12,6 +12,7 @@ var StandardDeviation = require('./StandardDeviation');
  * @constructor
  * @alias module:TimedSample
  */
+
 function TimedSample(dt, persistObj, logType, scaleFactor) {
 	var time = (dt[0] + dt[1] / 1e9) * 1000 / scaleFactor;
 
@@ -37,6 +38,7 @@ function TimedSample(dt, persistObj, logType, scaleFactor) {
  *
  * @param  {Number[]} dt Add an hrtime difference sample.
  */
+
 TimedSample.prototype.update = function (dt) {
 	var time = (dt[0] + dt[1] / 1e9) * 1000 / this.scaleFactor;
 	this.min = Number.isFinite(this.min) ? Math.min(this.min, time) : time;
@@ -59,6 +61,7 @@ TimedSample.prototype.update = function (dt) {
 /**
  * If we are persisting, then this is used to put the TimedSample back into an uninitialised state.
  */
+
 TimedSample.prototype.reset = function () {
 	this.min = null;
 	this.max = null;
@@ -72,6 +75,7 @@ TimedSample.prototype.reset = function () {
  *
  * @return {Object}
  */
+
 TimedSample.prototype.toJSON = function () {
 	var toReturn = {
 		min: this.min,

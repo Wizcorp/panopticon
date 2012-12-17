@@ -10,6 +10,7 @@
  * @constructor
  * @alias module:Set
  */
+
 function Set(val, persistObj, logType) {
 	this.logType = logType;
 	this.value = val;
@@ -21,6 +22,7 @@ function Set(val, persistObj, logType) {
  *
  * @param val Reset the internal state to val.
  */
+
 Set.prototype.update = function (val) {
 	this.value = val;
 };
@@ -31,6 +33,7 @@ Set.prototype.update = function (val) {
  *
  * @return Returns the stored value, with optional type information.
  */
+
 Set.prototype.toJSON = function () {
 	return this.logType ? { type: 'set', value: this.value } : this.value;
 };

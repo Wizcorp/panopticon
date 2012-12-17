@@ -8,6 +8,7 @@
  * @constructor
  * @alias module:StandardDeviation
  */
+
 function StandardDeviation(firstMeasurement) {
 	this.count = 1;
 	this.mean = firstMeasurement;
@@ -21,6 +22,7 @@ function StandardDeviation(firstMeasurement) {
  *
  * @param {Number} measurement Add a measurement to the set to calculate a standard deviation of.
  */
+
 StandardDeviation.prototype.addMeasurement = function (measurement) {
 	var delta = measurement - this.mean;
 
@@ -35,6 +37,7 @@ StandardDeviation.prototype.addMeasurement = function (measurement) {
  *
  * @return {Number} Performs the final step needed to yield an estimate of the standard deviation.
  */
+
 StandardDeviation.prototype.toJSON = function () {
 	return Math.sqrt(this.S / (this.count - 1));
 };

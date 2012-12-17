@@ -12,6 +12,7 @@
  * @constructor
  * @alias module:Inc
  */
+
 function Inc(val, persistObj, logType, scaleFactor, interval) {
 	this.value = Number.isFinite(val) ? val : 1;
 	this.interval = interval;
@@ -33,6 +34,7 @@ function Inc(val, persistObj, logType, scaleFactor, interval) {
  *
  * @param {Number} val Increment by val, or 1 if val is not a finite number.
  */
+
 Inc.prototype.update = function (val) {
 	this.value += Number.isFinite(val) ? val : 1;
 };
@@ -43,6 +45,7 @@ Inc.prototype.update = function (val) {
  *
  * @return {Number} Divides the internal state of the increment by the intervat and yields.
  */
+
 Inc.prototype.toJSON = function () {
 	var toReturn = this.scaleFactor * this.value / this.interval;
 
@@ -53,6 +56,7 @@ Inc.prototype.toJSON = function () {
 /**
  * If we are persisting, set this back to zero.
  */
+
 Inc.prototype.reset = function () {
 	this.value = 0;
 };

@@ -11,6 +11,7 @@ var StandardDeviation = require('./StandardDeviation');
  * @constructor
  * @alias module:Sample
  */
+
 function Sample(val, persistObj, logType) {
 	this.min = val;
 	this.max = val;
@@ -33,6 +34,7 @@ function Sample(val, persistObj, logType) {
  *
  * @param {Number} val Update the sample set.
  */
+
 Sample.prototype.update = function (val) {
 	this.min = this.hasOwnProperty('min') ? Math.min(this.min, val) : val;
 	this.max = this.hasOwnProperty('max') ? Math.max(this.max, val) : val;
@@ -54,6 +56,7 @@ Sample.prototype.update = function (val) {
 /**
  * When we have a persistent function, reset is called at the end of an interval;
  */
+
 Sample.prototype.reset = function () {
 	this.min = null;
 	this.max = null;
@@ -67,6 +70,7 @@ Sample.prototype.reset = function () {
  *
  * @return {Object}
  */
+
 Sample.prototype.toJSON = function () {
 	var toReturn = {
 		max: this.max,

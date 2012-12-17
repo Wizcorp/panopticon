@@ -7,6 +7,7 @@
  * @constructor
  * @alias module:Average
  */
+
 function Average(firstMeasurement) {
 	this.total = firstMeasurement;
 	this.count = 1;
@@ -18,6 +19,7 @@ function Average(firstMeasurement) {
  *
  * @param measurement A measurement to add to the set to be averaged.
  */
+
 Average.prototype.addMeasurement = function (measurement) {
 	this.count += 1;
 	this.total += measurement;
@@ -29,6 +31,7 @@ Average.prototype.addMeasurement = function (measurement) {
  *
  * @return {Number} Divides the stored total and the stored count to yield the average.
  */
+
 Average.prototype.toJSON = function () {
 	return this.total / this.count;
 };
