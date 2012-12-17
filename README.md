@@ -17,21 +17,23 @@ var Panopticon = require('panopticon');
 Panopticon itself is a constructor, so when you're ready to start it, make a new object
 
 ```javascript
-var panopticon = new Panopticon(startTime, interval, scaleFactor);
+var panopticon = new Panopticon(startTime, interval, scaleFactor, persist, logType);
 ```
 
-where startTime (ms since the unix epoch) is an optional time to start from, interval is the time delay (in ms) between batches of data and scaleFactor scales the reporting from incrementers. If no start time is provided, then it defaults to `0`. Similarly, if no sane interval is provided, it defaults to 10 seconds. By default the scale of reporting for incrementers is in kilohertz.
+where startTime (ms since the unix epoch) is an optional time to start from, interval is the time delay (in ms) between batches of data and scaleFactor scales the reporting from incrementers. If no start time is provided, then it defaults to `0`. Similarly, if no sane interval is provided, it defaults to 10 seconds. By default the scale of reporting for incrementers is in kilohertz. Persist is a boolean.
 
 If no value is passed in for `scaleFactor`, it defaults to `1` (reports in kHz). Panopticon internally calculates the rate of increments, so it needs to be told if this scale is wrong. For example, to change the reporting of incrementers to Hz, set this value to 1000. This only affects incrementers, since these are counted up over an interval and then divided by the length of an interval to estimate increments per millisecond (kHz). Sets and samples are your responsibility, so if these should be reporting in something other than kHz for those, then you must give panopticon the data in the scale desired.
 
+The next section gives detail on `persist` and `logType`, which are both boolean.
+
 It is important to note that for consistent sample collection, when startTime is given it must be the same across all workers and the master.
 
-By default the PID of each worker and the master are logged, as well as the number of workers (not including the master). Everything else needs to be sent to the panopticon object using one of its acquisition methods. In each case the `id` is the identifier that should be associated with this piece of data. The methods are
+By default the PID of each worker and the master are logged, as well as the number of workers (not including the master). Everything else needs to be sent to the panopticon object using one of its acquisition methods. In each case the `id` is the identifier that should be associated with this piece of data, and path is an array of strings representing subkeys in descending order. The methods are
 
- - `panopticon.set(id, n)`, where `n`, a finite number, may replace a previous `n` for this `id`.
- - `panopticon.inc(id, n)`, where `n` is added to the previous value if `n` is a finite number. If `n` is not a finite number, then it defaults to `1`.
- - `panopticon.sample(id, n)`, which keeps track of the max, min, average and standard deviation of `n` over an interval.
- - `panopticon.timedSample(id, dt)`, which is like sample, but takes the output of a high resolution timer `dt` (or rather the difference between two timers).
+ - `panopticon.set(path, id, n)`, where `n`, a finite number, may replace a previous `n` for this `id`.
+ - `panopticon.inc(path, id, n)`, where `n` is added to the previous value if `n` is a finite number. If `n` is not a finite number, then it defaults to `1`.
+ - `panopticon.sample(path, id, n)`, which keeps track of the max, min, average and standard deviation of `n` over an interval.
+ - `panopticon.timedSample(path, id, dt)`, which is like sample, but takes the output of a high resolution timer `dt` (or rather the difference between two timers).
 
 When your application is shutting down, it should call `panopticon.stop()` to clear timers.
 
@@ -41,6 +43,52 @@ On the master, halfway between collections from the workers and itself the panop
 panopticon.on('delivery', function (aggregatedData) {
 	// Do something with aggregatedData
 });
+```
+
+## `persist`
+
+Without persist turned on, a completely fresh batch of data is started by each panopticon every interval. This means that loggers that get fired rarely are only represented in intervals in which they have occurred. Since this is not always disireable, the persist object tells panoptica not to start from fresh, but simply to set the loggers to a null state. For `inc`s this is as simple as resetting to `0`, and for `set`s the value from the previous interval is kept. In the case of `sample` and `timedSample`, the subfields are set to `null` since no data recorded should be interpreted as a need for interpolation.
+
+## `logType`
+
+`logType` set to true indicates to panoptica that they need to put the *type* of loggers in reported samples. This allows a tool reading the eventual output to know what each datum means without having to infer it or be told explicitly. This is useful for data driven systems.
+
+## Getting data out.
+
+```javascript
+var server = require('http').createServer(function (req, res) {
+    panopticon.inc(['http'], 'request', 1);
+    /* You probably want to do other stuff... */
+});
+```
+Now after ten requests in an interval, the panopticon master will make an object available via its `query` method. If no path is given it assumes that you want a full report. With logType off you'll get something like:
+```javascript
+{
+    "id": 0,
+    "interval": 2500,
+    "numWorkers": 1,
+    "workers": {
+        "1": {
+            "http": {
+                "request": 10
+            },
+            "endTime": 1355724705625
+        }
+    }
+    "master": {
+        "endTime": 1355724705625
+    }
+}
+```
+
+`endTime` is inserted by default for each worker and the master, and is a UNIX time in milliseconds. For the cluster, the default values or `id`, `interval`, and `numWorkers` are always present. The `id` becomes important when running concurrent panoptica so that they might be differentiated. This example has one worker, and it appears that requests are only sent to it, and not the master. We told panopticon to increment the `request` key of the `http` subobject, and that's what it did. If the logType is turned on, then this subobject becomes:
+```javascript
+"http": {
+    "request": {
+        "type": "inc",
+        "value": 10
+    }
+}
 ```
 
 ## Panoptica
