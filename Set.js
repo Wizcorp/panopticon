@@ -29,6 +29,7 @@ function Set(val, timeStamp, persistObj) {
  * Simply replace the existing value contained in a set object.
  *
  * @param val Reset the internal state to val.
+ * @param {Number} timeStamp A unix time stamp (in ms).
  */
 
 Set.prototype.update = function (val, timeStamp) {

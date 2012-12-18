@@ -36,8 +36,8 @@ function Sample(val, timeStamp, persistObj) {
  */
 
 Sample.prototype.update = function (val, timeStamp) {
-	this.min = this.hasOwnProperty('min') ? Math.min(this.min, val) : val;
-	this.max = this.hasOwnProperty('max') ? Math.max(this.max, val) : val;
+	this.min = this.min === null ? val : Math.min(this.min, val);
+	this.max = this.max === null ? val : Math.max(this.max, val);
 	this.timeStamp = timeStamp;
 
 	if (!this.sigma) {
@@ -83,7 +83,7 @@ Sample.prototype.toJSON = function () {
 			min: this.min,
 			sigma: this.sigma,
 			average: this.average,
-			timeStamp: this.timedStamp
+			timeStamp: this.timeStamp
 		}
 	};
 };
