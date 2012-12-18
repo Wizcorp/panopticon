@@ -22,7 +22,7 @@ var instanceCount = 0;
 
 function resetData(thisObj) {
 	if (thisObj.persist) {
-		thisObj.emit('reset');
+		thisObj.emit('reset', thisObj.endTime);
 	} else {
 		thisObj.data = {};
 	}
@@ -44,8 +44,7 @@ function timeUp(thisObj) {
 	var now = Date.now();
 
 	if (thisObj.endTime <= now) {
-		thisObj.data.endTime = thisObj.endTime;
-
+		
 		// If we got left behind for some reason, catch up here.
 		do {
 			thisObj.endTime += thisObj.interval;
@@ -112,9 +111,29 @@ function augment(thisObj, DataConstructor, path, id, value) {
 
 	// The data is a singleton. Create it if it doesn't exist, otherwise just update it.
 	if (data[id]) {
-		data[id].update(value);
+		data[id].update(value, thisObj.endTime);
 	} else {
-		data[id] = new DataConstructor(value, thisObj.persist ? thisObj : null, thisObj.logType, thisObj.scaleFactor, thisObj.interval);
+		data[id] = new DataConstructor(value, thisObj.endTime, thisObj.persist ? thisObj : null, thisObj.scaleFactor, thisObj.interval);
+	}
+}
+
+
+/**
+ * The default transformer function. If none is provided upon panopticon instantiation then this is
+ * used.
+ *
+ * @param {Object} data An object containing data.
+ * @param {String|Number} id Worker id or 'master' for the master process.
+ * @return {Object} Transformed data.
+ */
+
+function defaultTransformer(data, id) {
+	if (id !== 'master') {
+		var toReturn = { workers: {} };
+		toReturn.workers[id] = data;
+		return toReturn;
+	} else {
+		return { master: data };
 	}
 }
 
@@ -127,11 +146,11 @@ function augment(thisObj, DataConstructor, path, id, value) {
  * @param {Number} interval Interval time in milliseconds.
  * @param {Number} scaleFactor 1 -> kHz, 1000 -> Hz.
  * @param {Boolean} persist Are we persisting samplers on new intervals?
- * @param {Boolean} logType Are we logging type informaiton?
+ * @param {Function} [transformer] A custom transformer function.
  * @private
  */
 
-function genericSetup(thisObj, startTime, interval, scaleFactor, persist, logType) {
+function genericSetup(thisObj, name, startTime, interval, scaleFactor, persist, transformer) {
 	// Create a data container
 	resetData(thisObj);
 
@@ -139,8 +158,9 @@ function genericSetup(thisObj, startTime, interval, scaleFactor, persist, logTyp
 	thisObj.interval = Number.isFinite(interval) && interval > 0 ? interval : 10000;
 	thisObj.scaleFactor = Number.isFinite(scaleFactor) && scaleFactor > 0 ? scaleFactor : 1;
 	thisObj.persist = !!persist;
-	thisObj.logType = !!logType;
+	thisObj.transform = transformer || defaultTransformer;
 	thisObj.id = instanceCount;
+	thisObj.name = name;
 
 	instanceCount += 1;
 
@@ -176,9 +196,9 @@ function genericSetup(thisObj, startTime, interval, scaleFactor, persist, logTyp
 function initAggregate(thisObj) {
 	thisObj.aggregated = {
 		id: thisObj.id,
-		interval: thisObj.interval / thisObj.scaleFactor,
-		numWorkers: new SetLog(Object.keys(cluster.workers).length, thisObj.persist, thisObj.logType),
-		workers: {}
+		name: thisObj.name,
+		interval: thisObj.interval,
+		data: {}
 	};
 }
 
@@ -208,6 +228,20 @@ function setupDelivery(thisObj) {
 	}, beginReporting);
 }
 
+function merge(master, supplement) {
+	if (typeof supplement !== 'object') {
+		return;
+	}
+
+	for (var key in supplement) {
+		if (master.hasOwnProperty(key)) {
+			merge(master[key], supplement[key]);
+		} else {
+			master[key] = supplement[key];
+		}
+	}
+}
+
 
 /**
  * Handles sample sets emitted by itself and sent to the master by workers.
@@ -223,7 +257,13 @@ function masterSetup(thisObj) {
 	// Collect samples emitted by master. These are stringified and parsed because the workers went
 	// through the same process. For consistency.
 	thisObj.on('sample', function (data) {
-		thisObj.aggregated.master = JSON.parse(JSON.stringify(data));
+
+		// Apply transform to master data. JSON parse it to ensure all toJSON functions have been
+		// appled.
+		var transformed = thisObj.transform(JSON.parse(JSON.stringify(data)), 'master');
+
+		// Merge transformed data with the aggregate.
+		merge(thisObj.aggregated.data, transformed);
 	});
 
 	// Create listeners for messages from workers, both for existing workers and workers that are
@@ -231,7 +271,12 @@ function masterSetup(thisObj) {
 	function setupMessageHandler(worker) {
 		function onMessage(message) {
 			if (message.event === 'workerSample' && message.id === thisObj.id) {
-				thisObj.aggregated.workers[worker.id] = message.sample;
+
+				// Apply transform to raw data.
+				var transformed = thisObj.transform(message.sample, worker.id);
+
+				// Merge raw data with master data
+				merge(thisObj.aggregated.data, transformed);
 			}
 		}
 
@@ -272,20 +317,21 @@ function workerSetup(thisObj) {
  * Please refer to the README for more information.
  *
  * @param {Number} startTime Time in milliseconds elapsed since 1 January 1970 00:00:00 UTC.
+ * @param {String} name The name of the panopticon being constructed.
  * @param {Number} interval Interval time in milliseconds.
  * @param {Number} [scaleFactor] 1 -> kHz, 1000 -> Hz. If no positive finite number is given, defaults to 1.
  * @param {Boolean} [persist] Keep a logger once initialised. Each interval reset it.
- * @param {Boolean} [logType] Log type information.
+ * @param {Function} [transformer] A custom function to transform data before merging with the aggregate.
  * @constructor
  * @extends EventEmitter
  * @alias module:Panopticon
  */
 
-function Panopticon(startTime, interval, scaleFactor, persist, logType) {
+function Panopticon(startTime, name, interval, scaleFactor, persist, transformer) {
 	EventEmitter.call(this);
 
 	// First we sort out the methods and data which handle are local to this process.
-	genericSetup(this, startTime, interval, scaleFactor, persist, logType);
+	genericSetup(this, name, startTime, interval, scaleFactor, persist, transformer);
 
 	// If the process is a worker, we only need to send the master results then return. If the
 	// process is not a worker, it is either the master or stand alone. The master also handles

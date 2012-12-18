@@ -5,25 +5,25 @@
  * increments per millisecond.
  *
  * @param {Number} val Value to initialise the increment. If not a finite number, defaults to 1.
+ * @param {Number} timeStamp A unix time stamp (in ms).
  * @param {Object} persistObj Object that emits a reset event. An instance of inc belongs to this object.
- * @param {Boolean} logType Boolean that indicates if we want to log type information.
  * @param {Number} scaleFactor 1 -> kHz, 1000 -> Hz.
  * @param {Number} interval This interval over which increments are to be taken.
  * @constructor
  * @alias module:Inc
  */
 
-function Inc(val, persistObj, logType, scaleFactor, interval) {
+function Inc(val, timeStamp, persistObj, scaleFactor, interval) {
 	this.value = Number.isFinite(val) ? val : 1;
 	this.interval = interval;
 	this.scaleFactor = scaleFactor;
-	this.logType = logType;
+	this.timeStamp = timeStamp;
 
 	if (persistObj) {
 		var that = this;
 
-		persistObj.on('reset', function () {
-			that.reset();
+		persistObj.on('reset', function (timeStamp) {
+			that.reset(timeStamp);
 		});
 	}
 }
@@ -35,8 +35,9 @@ function Inc(val, persistObj, logType, scaleFactor, interval) {
  * @param {Number} val Increment by val, or 1 if val is not a finite number.
  */
 
-Inc.prototype.update = function (val) {
+Inc.prototype.update = function (val, timeStamp) {
 	this.value += Number.isFinite(val) ? val : 1;
+	this.timeStamp = timeStamp;
 };
 
 
@@ -47,9 +48,10 @@ Inc.prototype.update = function (val) {
  */
 
 Inc.prototype.toJSON = function () {
-	var toReturn = this.scaleFactor * this.value / this.interval;
-
-	return this.logType ? { type: 'inc', value: toReturn } : toReturn;
+	return {
+		type: 'inc',
+		value: { val: this.scaleFactor * this.value / this.interval, timeStamp: this.timeStamp }
+	};
 };
 
 
@@ -57,8 +59,9 @@ Inc.prototype.toJSON = function () {
  * If we are persisting, set this back to zero.
  */
 
-Inc.prototype.reset = function () {
+Inc.prototype.reset = function (timeStamp) {
 	this.value = 0;
+	this.timeStamp = timeStamp;
 };
 
 

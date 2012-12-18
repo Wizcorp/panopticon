@@ -6,24 +6,24 @@ var StandardDeviation = require('./StandardDeviation');
  * Sample taker object constructor.
  *
  * @param {Number} val This first value is used to initialise the sample.
+ * @param {Number} timeStamp A unix time stamp (in ms).
  * @param {Object} persistObj If we are persisting then we don't initialise.
- * @param {Boolean} logType Log type information.
  * @constructor
  * @alias module:Sample
  */
 
-function Sample(val, persistObj, logType) {
+function Sample(val, timeStamp, persistObj) {
 	this.min = val;
 	this.max = val;
 	this.sigma = new StandardDeviation(val);
 	this.average = new Average(val);
-	this.logType = logType;
+	this.timedStamp = timeStamp;
 
 	if (persistObj) {
 		var that = this;
 
-		persistObj.on('reset', function () {
-			that.reset();
+		persistObj.on('reset', function (timeStamp) {
+			that.reset(timeStamp);
 		});
 	}
 }
@@ -35,9 +35,10 @@ function Sample(val, persistObj, logType) {
  * @param {Number} val Update the sample set.
  */
 
-Sample.prototype.update = function (val) {
+Sample.prototype.update = function (val, timeStamp) {
 	this.min = this.hasOwnProperty('min') ? Math.min(this.min, val) : val;
 	this.max = this.hasOwnProperty('max') ? Math.max(this.max, val) : val;
+	this.timeStamp = timeStamp;
 
 	if (!this.sigma) {
 		this.sigma = new StandardDeviation(val);
@@ -55,13 +56,16 @@ Sample.prototype.update = function (val) {
 
 /**
  * When we have a persistent function, reset is called at the end of an interval;
+ *
+ * @param {Number} timeStamp A unix time stamp (in ms).
  */
 
-Sample.prototype.reset = function () {
+Sample.prototype.reset = function (timeStamp) {
 	this.min = null;
 	this.max = null;
 	this.sigma = null;
 	this.average = null;
+	this.timeStamp = timeStamp;
 };
 
 
@@ -72,14 +76,16 @@ Sample.prototype.reset = function () {
  */
 
 Sample.prototype.toJSON = function () {
-	var toReturn = {
-		max: this.max,
-		min: this.min,
-		sigma: this.sigma,
-		average: this.average
+	return {
+		type: 'sample',
+		value: {
+			max: this.max,
+			min: this.min,
+			sigma: this.sigma,
+			average: this.average,
+			timeStamp: this.timedStamp
+		}
 	};
-
-	return this.logType ? { type: 'sample', value: toReturn } : toReturn;
 };
 
 
