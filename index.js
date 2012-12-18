@@ -44,7 +44,7 @@ function timeUp(thisObj) {
 	var now = Date.now();
 
 	if (thisObj.endTime <= now) {
-		
+
 		// If we got left behind for some reason, catch up here.
 		do {
 			thisObj.endTime += thisObj.interval;
@@ -197,7 +197,7 @@ function initAggregate(thisObj) {
 	thisObj.aggregated = {
 		id: thisObj.id,
 		name: thisObj.name,
-		interval: thisObj.interval,
+		interval: thisObj.interval / thisObj.scaleFactor,
 		data: {}
 	};
 }
