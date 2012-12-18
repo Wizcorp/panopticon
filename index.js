@@ -234,10 +234,12 @@ function merge(master, supplement) {
 	}
 
 	for (var key in supplement) {
-		if (master.hasOwnProperty(key)) {
-			merge(master[key], supplement[key]);
-		} else {
-			master[key] = supplement[key];
+		if (supplement.hasOwnProperty(key)) {
+			if (master.hasOwnProperty(key)) {
+				merge(master[key], supplement[key]);
+			} else {
+				master[key] = supplement[key];
+			}
 		}
 	}
 }
