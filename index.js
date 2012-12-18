@@ -134,6 +134,7 @@ function defaultTransformer(data, id) {
 
 	var toReturn = { workers: {} };
 	toReturn.workers[id] = data;
+	
 	return toReturn;
 }
 
