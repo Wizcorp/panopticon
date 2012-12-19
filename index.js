@@ -11,6 +11,52 @@ var TimedSampleLog = require('./TimedSample');
 // in parallel without master panoptica getting messages from multiple panoptica on each worker.
 var instanceCount = 0;
 
+/**
+ * Merge a supplemental document with a master document. This assumes that both follow the same
+ * schema, but with elements possibly not represented.
+ *
+ * @param master
+ * @param supplement
+ */
+
+function merge(master, supplement) {
+	if (typeof supplement !== 'object') {
+		return;
+	}
+
+	for (var key in supplement) {
+		if (supplement.hasOwnProperty(key)) {
+			if (master.hasOwnProperty(key)) {
+				merge(master[key], supplement[key]);
+			} else {
+				master[key] = supplement[key];
+			}
+		}
+	}
+}
+
+
+/**
+ * The default transformer function. If none is provided upon panopticon instantiation then this is
+ * used.
+ *
+ * @param {Object} data An object containing data.
+ * @param {String|Number} id Worker id or 'master' for the master process.
+ * @return {Object} Transformed data.
+ * @private
+ */
+
+function defaultTransformer(data, id) {
+	if (id === 'master') {
+		return { master: data };
+	}
+
+	var toReturn = { workers: {} };
+	toReturn.workers[id] = data;
+
+	return toReturn;
+}
+
 
 /**
  * The data property holds all the samples for a process. This is used to initialise and reset it
@@ -119,27 +165,6 @@ function augment(thisObj, DataConstructor, path, id, value) {
 
 
 /**
- * The default transformer function. If none is provided upon panopticon instantiation then this is
- * used.
- *
- * @param {Object} data An object containing data.
- * @param {String|Number} id Worker id or 'master' for the master process.
- * @return {Object} Transformed data.
- */
-
-function defaultTransformer(data, id) {
-	if (id === 'master') {
-		return { master: data };
-	}
-
-	var toReturn = { workers: {} };
-	toReturn.workers[id] = data;
-	
-	return toReturn;
-}
-
-
-/**
  * Set up data common to the master and worker instances of Panopticon.
  *
  * @param {Object} thisObj The scope to operate on.
@@ -227,22 +252,6 @@ function setupDelivery(thisObj) {
 		}, thisObj.interval);
 
 	}, beginReporting);
-}
-
-function merge(master, supplement) {
-	if (typeof supplement !== 'object') {
-		return;
-	}
-
-	for (var key in supplement) {
-		if (supplement.hasOwnProperty(key)) {
-			if (master.hasOwnProperty(key)) {
-				merge(master[key], supplement[key]);
-			} else {
-				master[key] = supplement[key];
-			}
-		}
-	}
 }
 
 
