@@ -17,7 +17,7 @@ function Sample(val, timeStamp, persistObj) {
 	this.max = val;
 	this.sigma = new StandardDeviation(val);
 	this.average = new Average(val);
-	this.timedStamp = timeStamp;
+	this.timeStamp = timeStamp;
 
 	if (persistObj) {
 		var that = this;

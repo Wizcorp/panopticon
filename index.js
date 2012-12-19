@@ -17,6 +17,7 @@ var instanceCount = 0;
  *
  * @param master
  * @param supplement
+ * @private
  */
 
 function merge(master, supplement) {
@@ -62,51 +63,51 @@ function defaultTransformer(data, id) {
  * The data property holds all the samples for a process. This is used to initialise and reset it
  * after an interval.
  *
- * @param {Object} thisObj The scope to operate on.
+ * @param {Object} panopticon The scope to operate on.
  * @private
  */
 
-function resetData(thisObj) {
-	if (thisObj.persist) {
-		thisObj.emit('reset', thisObj.endTime);
+function resetData(panopticon) {
+	if (panopticon.persist) {
+		panopticon.emit('reset', panopticon.endTime);
 	} else {
-		thisObj.data = {};
+		panopticon.data = {};
 	}
 
 	// After resetting the data, there may be single sets to be done for the new interval.
-	thisObj.emit('newInterval');
+	panopticon.emit('newInterval');
 }
 
 
 /**
- * Every time a sample is taken, or thisObj.timer fires, this function checks if it is time to emit
- * a sample yet (and reset after emission), and to reset thisObj.timer if needed.
+ * Every time a sample is taken, or panopticon.timer fires, this function checks if it is time to emit
+ * a sample yet (and reset after emission), and to reset panopticon.timer if needed.
  *
- * @param {Object} thisObj The scope to operate on.
+ * @param {Object} panopticon The scope to operate on.
  * @private
  */
 
-function timeUp(thisObj) {
+function timeUp(panopticon) {
 	var now = Date.now();
 
-	if (thisObj.endTime <= now) {
+	if (panopticon.endTime <= now) {
 
 		// If we got left behind for some reason, catch up here.
 		do {
-			thisObj.endTime += thisObj.interval;
-		} while (thisObj.endTime <= now);
+			panopticon.endTime += panopticon.interval;
+		} while (panopticon.endTime <= now);
 
 		// Emit the sample! Emitting the interval as well allows us to distinguish between separate
 		// panoptica running in parallel.
-		thisObj.emit('sample', thisObj.data, thisObj.id);
+		panopticon.emit('sample', panopticon.data, panopticon.id);
 
 		// Reset the data.
-		resetData(thisObj);
+		resetData(panopticon);
 
 		// Reset the timeout.
-		if (thisObj.timer) {
-			clearTimeout(thisObj.timer);
-			thisObj.timer = null;
+		if (panopticon.timer) {
+			clearTimeout(panopticon.timer);
+			panopticon.timer = null;
 		}
 	}
 
@@ -115,11 +116,11 @@ function timeUp(thisObj) {
 	// resets the timer, thus handling the issue. If the timer legitimately fires, then the below
 	// acts to reset it.
 
-	if (!thisObj.timer) {
-		thisObj.timer = setTimeout(function () {
-			thisObj.timer = null;
-			timeUp(thisObj);
-		}, thisObj.endTime - now);
+	if (!panopticon.timer) {
+		panopticon.timer = setTimeout(function () {
+			panopticon.timer = null;
+			timeUp(panopticon);
+		}, panopticon.endTime - now);
 	}
 }
 
@@ -128,7 +129,7 @@ function timeUp(thisObj) {
  * Creates paths in a data sub-object. At the end of the path initialise a new Set, Int or Sample
  * object. If one already exists, update it with the new piece of data.
  *
- * @param {Object} thisObj The object that is being augmented.
+ * @param {Object} panopticon The object that is being augmented.
  * @param {Function} DataConstructor A constructor function (Set, Inc or Sample).
  * @param {String[]} path A list of keys of increasing depth that end in the object that will receive the id/value pair.
  * @param {String} id The key in the final sub-object in the path that will receive value.
@@ -136,8 +137,8 @@ function timeUp(thisObj) {
  * @private
  */
 
-function augment(thisObj, DataConstructor, path, id, value) {
-	var data = thisObj.data;
+function augment(panopticon, DataConstructor, path, id, value) {
+	var data = panopticon.data;
 
 	if (path) {
 		var i, len = path.length;
@@ -153,13 +154,13 @@ function augment(thisObj, DataConstructor, path, id, value) {
 		}
 	}
 
-	timeUp(thisObj); // Check if this sample should be in a new set.
+	timeUp(panopticon); // Check if this sample should be in a new set.
 
 	// The data is a singleton. Create it if it doesn't exist, otherwise just update it.
 	if (data[id]) {
-		data[id].update(value, thisObj.endTime);
+		data[id].update(value, panopticon.endTime);
 	} else {
-		data[id] = new DataConstructor(value, thisObj.endTime, thisObj.persist ? thisObj : null, thisObj.scaleFactor, thisObj.interval);
+		data[id] = new DataConstructor(value, panopticon.endTime, panopticon.persist ? panopticon : null, panopticon.scaleFactor, panopticon.interval);
 	}
 }
 
@@ -167,7 +168,7 @@ function augment(thisObj, DataConstructor, path, id, value) {
 /**
  * Set up data common to the master and worker instances of Panopticon.
  *
- * @param {Object} thisObj The scope to operate on.
+ * @param {Object} panopticon The scope to operate on.
  * @param {Number} startTime Time in milliseconds elapsed since 1 January 1970 00:00:00 UTC.
  * @param {Number} interval Interval time in milliseconds.
  * @param {Number} scaleFactor 1 -> kHz, 1000 -> Hz.
@@ -176,17 +177,17 @@ function augment(thisObj, DataConstructor, path, id, value) {
  * @private
  */
 
-function genericSetup(thisObj, name, startTime, interval, scaleFactor, persist, transformer) {
+function genericSetup(panopticon, name, startTime, interval, scaleFactor, persist, transformer) {
 	// Create a data container
-	resetData(thisObj);
+	resetData(panopticon);
 
 	// Set the interval from given data. If no sane interval provided, default to 10 seconds.
-	thisObj.interval = Number.isFinite(interval) && interval > 0 ? interval : 10000;
-	thisObj.scaleFactor = Number.isFinite(scaleFactor) && scaleFactor > 0 ? scaleFactor : 1;
-	thisObj.persist = !!persist;
-	thisObj.transform = transformer || defaultTransformer;
-	thisObj.id = instanceCount;
-	thisObj.name = name;
+	panopticon.interval = Number.isFinite(interval) && interval > 0 ? interval : 10000;
+	panopticon.scaleFactor = Number.isFinite(scaleFactor) && scaleFactor > 0 ? scaleFactor : 1;
+	panopticon.persist = !!persist;
+	panopticon.transform = transformer || defaultTransformer;
+	panopticon.id = instanceCount;
+	panopticon.name = name;
 
 	instanceCount += 1;
 
@@ -195,19 +196,19 @@ function genericSetup(thisObj, name, startTime, interval, scaleFactor, persist, 
 
 	// If no start time was given, or if it was not a finite number, use zero.
 	var start = Number.isFinite(startTime) ? startTime : 0;
-	var offset = (start - now) % thisObj.interval;
+	var offset = (start - now) % panopticon.interval;
 
 	// If startTime is before now, we need to add an interval so that the first end time is in the
 	// future. If not, we just add the offset to now.
-	thisObj.endTime = now + offset + (offset < 0 ? thisObj.interval : 0);
+	panopticon.endTime = now + offset + (offset < 0 ? panopticon.interval : 0);
 
 	// Start the timer.
-	thisObj.timer = null;
+	panopticon.timer = null;
 
 	// Remove limit on number of listeners.
-	thisObj.setMaxListeners(0);
+	panopticon.setMaxListeners(0);
 
-	timeUp(thisObj);
+	timeUp(panopticon);
 }
 
 
@@ -215,15 +216,15 @@ function genericSetup(thisObj, name, startTime, interval, scaleFactor, persist, 
  * For master only. This object will contain the aggregated data from the master and the workers.
  * This may later be extended to allow dynamic logging of cluster data.
  *
- * @param {Object} thisObj The scope to operate on.
+ * @param {Object} panopticon The scope to operate on.
  * @private
  */
 
-function initAggregate(thisObj) {
-	thisObj.aggregated = {
-		id: thisObj.id,
-		name: thisObj.name,
-		interval: thisObj.interval / thisObj.scaleFactor,
+function initAggregate(panopticon) {
+	panopticon.aggregated = {
+		id: panopticon.id,
+		name: panopticon.name,
+		interval: panopticon.interval / panopticon.scaleFactor,
 		data: {}
 	};
 }
@@ -232,24 +233,24 @@ function initAggregate(thisObj) {
 /**
  * Sets up periodic deliveries of sample sets, and reinitialises the aggregated data object.
  *
- * @param {Object} thisObj The scope to operate on.
+ * @param {Object} panopticon The scope to operate on.
  * @private
  */
 
-function setupDelivery(thisObj) {
+function setupDelivery(panopticon) {
 	// Wait half an interval before beginning the delivery interval.
-	var beginReporting = thisObj.endTime + thisObj.interval / 2;
+	var beginReporting = panopticon.endTime + panopticon.interval / 2;
 
-	thisObj.halfInterval = setTimeout(function () {
+	panopticon.halfInterval = setTimeout(function () {
 
 		// Begin reporting 0.5th intervals after the first endTime. This way reports are emitted
 		// well away from when batches are collected.
-		thisObj.aggregationInterval = setInterval(function () {
-			thisObj.emit('delivery', thisObj.aggregated);
+		panopticon.aggregationInterval = setInterval(function () {
+			panopticon.emit('delivery', panopticon.aggregated);
 
 			// Reset the aggregate object.
-			initAggregate(thisObj);
-		}, thisObj.interval);
+			initAggregate(panopticon);
+		}, panopticon.interval);
 
 	}, beginReporting);
 }
@@ -258,38 +259,38 @@ function setupDelivery(thisObj) {
 /**
  * Handles sample sets emitted by itself and sent to the master by workers.
  *
- * @param {Object} thisObj The scope to operate on.
+ * @param {Object} panopticon The scope to operate on.
  * @private
  */
 
-function masterSetup(thisObj) {
+function masterSetup(panopticon) {
 	// Create the basic aggregate object.
-	initAggregate(thisObj);
+	initAggregate(panopticon);
 
 	// Collect samples emitted by master. These are stringified and parsed because the workers went
 	// through the same process. For consistency.
-	thisObj.on('sample', function (data) {
+	panopticon.on('sample', function (data) {
 
 		// Apply transform to master data. This must be JSON stringified and parsed to make sure
 		// that `value` (which may be generated by a `toJSON` function has been created for each
 		// datum.
-		var transformed = thisObj.transform(JSON.parse(JSON.stringify(data)), 'master');
+		var transformed = panopticon.transform(JSON.parse(JSON.stringify(data)), 'master');
 
 		// Merge transformed data with the aggregate.
-		merge(thisObj.aggregated.data, transformed);
+		merge(panopticon.aggregated.data, transformed);
 	});
 
 	// Create listeners for messages from workers, both for existing workers and workers that are
 	// spawned in the future.
 	function setupMessageHandler(worker) {
 		function onMessage(message) {
-			if (message.event === 'workerSample' && message.id === thisObj.id) {
+			if (message.event === 'workerSample' && message.id === panopticon.id) {
 
 				// Apply transform to raw data.
-				var transformed = thisObj.transform(message.sample, worker.id);
+				var transformed = panopticon.transform(message.sample, worker.id);
 
 				// Merge raw data with master data
-				merge(thisObj.aggregated.data, transformed);
+				merge(panopticon.aggregated.data, transformed);
 			}
 		}
 
@@ -314,12 +315,12 @@ function masterSetup(thisObj) {
 /**
  * The workers simply send samples to the master.
  *
- * @param {Object} thisObj The scope to operate on.
+ * @param {Object} panopticon The scope to operate on.
  * @private
  */
 
-function workerSetup(thisObj) {
-	thisObj.on('sample', function (data, id) {
+function workerSetup(panopticon) {
+	panopticon.on('sample', function (data, id) {
 		process.send({ event: 'workerSample', sample: data, id: id });
 	});
 }
