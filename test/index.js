@@ -1,5 +1,8 @@
 var assert = require('assert');
-//var Panopticon = require('../');
+var EventEmitter = require('events').EventEmitter;
+var cluster = require('cluster');
+
+var Panopticon = require('../');
 var StandardDeviation = require('../StandardDeviation');
 var Average = require('../Average');
 var SetLog = require('../Set');
@@ -163,191 +166,308 @@ function statisticsTests() {
 
 function auxClassTests() {
 	function testSet() {
-		var expected = 'testString';
-		var set = new SetLog(expected);
-		var actual = seDes(set);
+		var now = Date.now();
+		var testString = 'testString';
 
-		handleAssert(assert.strictEqual, [actual, expected], 'checkSetAfterParse');
-
-		expected = 'anotherTestString';
-		set.update(expected);
-		actual = seDes(set);
-
-		handleAssert(assert.strictEqual, [actual, expected], 'checkSetAfterUpdateAndParse');
-
-		set = new SetLog('testString', false, true);
-		actual = seDes(set);
-		expected = {
+		var expected = {
 			type: 'set',
-			value: 'testString'
+			value: {
+				val: testString,
+				timeStamp: now
+			}
 		};
 
-		handleAssert(assert.deepEqual, [actual, expected], 'checkTypedSetAfterUpdateAndParse');
+		var set = new SetLog(testString, now);
+		var actual = seDes(set);
+
+		handleAssert(assert.deepEqual, [actual, expected], 'checkSetAfterParse');
+
+		var nextTestString = 'anotherTestString';
+		var next = now + 10;
+
+		expected.value.val = nextTestString;
+		expected.value.timeStamp = next;
+
+		set.update(nextTestString, next);
+		actual = seDes(set);
+
+		handleAssert(assert.deepEqual, [actual, expected], 'checkSetAfterUpdateAndParse');
+
+		var emitter = new EventEmitter();
+
+		set = new SetLog(testString, now, emitter);
+
+		emitter.emit('reset', next);
+
+		expected = {
+			type: 'set',
+			value: {
+				val: testString,
+				timeStamp: next
+			}
+		};
+
+		actual = seDes(set);
+
+		handleAssert(assert.deepEqual, [actual, expected], 'checkSetAfterReset');
 	}
 
 	function testInc() {
-		var expected = 1;
-		var inc = new IncLog(1, false, false, 1, 1);
+		var now = Date.now();
+
+		var expected = {
+			type: 'inc',
+			value: {
+				val: 1,
+				timeStamp: now
+			}
+		};
+
+		var inc = new IncLog(1, now, null, 1, 1);
 		var actual = seDes(inc);
 
 		// Basic initialisation.
-		handleAssert(assert.strictEqual, [actual, expected], 'checkIncAfterParse');
+		handleAssert(assert.deepEqual, [actual, expected], 'checkIncAfterParse');
 
-		inc = new IncLog(null, false, false, 1, 1);
+		inc = new IncLog(null, now, null, 1, 1);
 		actual = seDes(inc);
 
 		// Initialising without a finite number should treat initial value as 1.
-		handleAssert(assert.strictEqual, [actual, expected], 'checkNullIncAfterParse');
+		handleAssert(assert.deepEqual, [actual, expected], 'checkNullIncAfterParse');
 
-		expected = 0;
-		inc = new IncLog(0, false, false, 1, 1);
+		expected.value.val = 0;
+		inc = new IncLog(0, now, null, 1, 1);
 		actual = seDes(inc);
 
 		// Initialising with 0 should set the initial value as 0.
-		handleAssert(assert.strictEqual, [actual, expected], 'checkNullIncAfterParse');
+		handleAssert(assert.deepEqual, [actual, expected], 'checkNullIncAfterParse');
 
-		inc.update(0);
+		var next = now + 10;
+		inc.update(0, next);
+
+		expected.value.val = 0;
+		expected.value.timeStamp = next;
+
 		actual = seDes(inc);
 
 		// Incrementing by zero should result in no change.
-		handleAssert(assert.strictEqual, [actual, expected], 'checkZeroIncAfterParse');
+		handleAssert(assert.deepEqual, [actual, expected], 'checkZeroIncAfterParse');
 
-		expected = 1;
-		inc.update(1);
+		expected.value.val = 1;
+		expected.value.timeStamp = now;
+
+		inc.update(1, now);
 		actual = seDes(inc);
 
 		// Incrementing by one should add one from the value.
-		handleAssert(assert.strictEqual, [actual, expected], 'checkIncrementedIncAfterParse');
+		handleAssert(assert.deepEqual, [actual, expected], 'checkIncrementedIncAfterParse');
 
-		expected = 0;
-		inc.update(-1);
+		expected.value.val = 0;
+		expected.value.timeStamp = now;
+
+		inc.update(-1, now);
 		actual = seDes(inc);
 
 		// Decrementing by one should take one from the value.
-		handleAssert(assert.strictEqual, [actual, expected], 'checkDecrementedIncAfterParse');
+		handleAssert(assert.deepEqual, [actual, expected], 'checkDecrementedIncAfterParse');
 
-		expected = 2;
-		inc.update(2);
+		expected.value.val = 2;
+		expected.value.timeStamp = next;
+
+		inc.update(2, next);
 		actual = seDes(inc);
 
 		// Incrememting by two should add two to the value.
-		handleAssert(assert.strictEqual, [actual, expected], 'checkIncrementByTwoIncAfterParse');
+		handleAssert(assert.deepEqual, [actual, expected], 'checkIncrementByTwoIncAfterParse');
 
-		expected = 3;
-		inc.update("junk");
+		expected.value.val = 3;
+		expected.value.timeStamp = now;
+
+		inc.update("junk", now);
 		actual = seDes(inc);
 
 		// Incrementing with something other than a number treats is treated as adding one.
-		handleAssert(assert.strictEqual, [actual, expected], 'checkJunkIncAfterParse');
+		handleAssert(assert.deepEqual, [actual, expected], 'checkJunkIncAfterParse');
 
-		inc = new IncLog(1, false, false, 0.1, 1);
-		expected = 0.1;
+		inc = new IncLog(1, now, null, 0.1, 1);
+		expected.value.val = 0.1;
 		actual = seDes(inc);
 
 		// A scale factor of 0.1 should multiply the value by 0.1.
-		handleAssert(assert.strictEqual, [actual, expected], 'checkScaledIncAfterParse');
+		handleAssert(assert.deepEqual, [actual, expected], 'checkScaledIncAfterParse');
 
-		inc = new IncLog(1, false, false, 1, 0.1);
-		expected = 10;
+		var emitter = new EventEmitter();
+		inc = new IncLog(1, now, emitter, 1, 0.1);
+		expected.value.val = 10;
 		actual = seDes(inc);
 
 		// An interval of 0.1 should multiply the value by 0.1.
-		handleAssert(assert.strictEqual, [actual, expected], 'checkIntervalIncAfterParse');
+		handleAssert(assert.deepEqual, [actual, expected], 'checkIntervalIncAfterParse');
 
-		inc = new IncLog(1, false, true, 1, 0.1);
+		emitter.emit('reset', next);
+
+		expected.value.val = 0;
+		expected.value.timeStamp = next;
+
 		actual = seDes(inc);
-		expected = {
-			type: 'inc',
-			value: 10
-		};
 
-		// Test that types are returned when we initialise with types turned on.
-		handleAssert(assert.deepEqual, [actual, expected], 'checkTypedIntervalIncAfterParse');
+		// A reset inc should have a value of 0.
+		handleAssert(assert.deepEqual, [actual, expected], 'checkIntervalIncAfterReset');
 	}
 
 	function testSample() {
-		var sample = new SampleLog(1);
+		var now = Date.now();
+		var next = now + 10;
+		var emitter = new EventEmitter();
+		var sample = new SampleLog(1, now, null);
 		var actual = seDes(sample);
 		var expected = {
-			min: 1,
-			max: 1,
-			sigma: null,
-			average: 1
-		};
-
-		// A single sample should give a null standard deviation, and same max, min and average.
-		handleAssert(assert.deepEqual, [actual, expected], 'checkSingleSampleAfterParse');
-
-		sample.update(1);
-		actual = seDes(sample);
-		expected = {
-			min: 1,
-			max: 1,
-			sigma: 0,
-			average: 1
-		};
-
-		// Add an identicle sample. null, all properties should now be the same, with 0 deviation.
-		handleAssert(assert.deepEqual, [actual, expected], 'checkTwoSamplesAfterParse');
-
-		sample = new SampleLog(1, false, true);
-		actual = seDes(sample);
-		expected = {
 			type: 'sample',
 			value: {
 				min: 1,
 				max: 1,
 				sigma: null,
-				average: 1
+				average: 1,
+				timeStamp: now
 			}
 		};
 
-		// Check that type is returned with value when we have initialised with type on.
-		handleAssert(assert.deepEqual, [actual, expected], 'checkTypeSampleAfterParse');
-	}
-
-	function testTimedSample() {
-		var timedSample = new TimedSampleLog([1, 0], false, false, 1);
-		var actual = seDes(timedSample);
-		var expected = {
-			min: 1000,
-			max: 1000,
-			sigma: null,
-			average: 1000,
-			scaleFactor: 1
-		};
+		// First test without persistObj, for branch checking.
+		handleAssert(assert.deepEqual, [actual, expected], 'checkSingleSampleAfterParseWithoutPersist');
+		
+		sample = new SampleLog(1, now, emitter);
+		actual = seDes(sample);
 
 		// A single sample should give a null standard deviation, and same max, min and average.
-		handleAssert(assert.deepEqual, [actual, expected], 'checkSingleTimedSampleAfterParse');
+		handleAssert(assert.deepEqual, [actual, expected], 'checkSingleSampleAfterParse');
 
-		timedSample.update([1, 0]);
-		actual = seDes(timedSample);
+		sample.update(1, now);
+		actual = seDes(sample);
+
 		expected = {
-			min: 1000,
-			max: 1000,
-			sigma: 0,
-			average: 1000,
-			scaleFactor: 1
+			type: 'sample',
+			value: {
+				min: 1,
+				max: 1,
+				sigma: 0,
+				average: 1,
+				timeStamp: now
+			}
 		};
 
 		// Add an identicle sample. null, all properties should now be the same, with 0 deviation.
-		handleAssert(assert.deepEqual, [actual, expected], 'checkTwoTimedSamplesAfterParse');
+		handleAssert(assert.deepEqual, [actual, expected], 'checkTwoSamplesAfterParse');
 
-		timedSample = new TimedSampleLog([1, 0], false, true, 1);
-		actual = seDes(timedSample);
-		expected = {
+		emitter.emit('reset', next);
+		actual = seDes(sample);
+
+		expected.value = {
+			min: null,
+			max: null,
+			sigma: null,
+			average: null,
+			timeStamp: next
+		};
+
+		// Reset the object and check that the internal state is that expected.
+		handleAssert(assert.deepEqual, [actual, expected], 'checkAfterReset');
+
+		sample.update(2, now);
+		sample.update(2, now);
+		actual = seDes(sample);
+
+		expected.value = {
+			min: 2,
+			max: 2,
+			sigma: 0,
+			average: 2,
+			timeStamp: now
+		};
+
+		// Check that sigmas are reinitialised on update after a reset.
+		handleAssert(assert.deepEqual, [actual, expected], 'checkTwoSamplesAfterReset');
+	}
+
+	function testTimedSample() {
+		var now = Date.now();
+		var next = now + 10;
+		var emitter = new EventEmitter();
+		var timedSample = new TimedSampleLog([1, 0], now, null, 1);
+		var actual = seDes(timedSample);
+		var expected = {
 			type: 'timedSample',
 			value: {
 				min: 1000,
 				max: 1000,
 				sigma: null,
 				average: 1000,
+				scaleFactor: 1,
+				timeStamp: now
+			}
+		};
+
+		// First test without a persistObj, for branch checking.
+		handleAssert(assert.deepEqual, [actual, expected], 'checkSingleTimedSampleAfterParseWithoutPersist');
+
+		timedSample = new TimedSampleLog([1, 0], now, emitter, 1);
+		actual = seDes(timedSample);
+		
+		// A single sample should give a null standard deviation, and same max, min and average.
+		handleAssert(assert.deepEqual, [actual, expected], 'checkSingleTimedSampleAfterParse');
+
+		timedSample.update([1, 0]);
+		actual = seDes(timedSample);
+		expected = {
+			type: 'timedSample',
+			value: {
+				min: 1000,
+				max: 1000,
+				sigma: 0,
+				average: 1000,
 				scaleFactor: 1
 			}
 		};
 
-		// Check that type is returned when we have initialised with types on.
-		handleAssert(assert.deepEqual, [actual, expected], 'checkTypedTimedSampleAfterParse');
+		// Add an identicle sample. null, all properties should now be the same, with 0 deviation.
+		handleAssert(assert.deepEqual, [actual, expected], 'checkTwoTimedSamplesAfterParse');
+
+		emitter.emit('reset', next);
+		actual = seDes(timedSample);
+
+		expected = {
+			type: 'timedSample',
+			value: {
+				min: null,
+				max: null,
+				sigma: null,
+				average: null,
+				scaleFactor: 1,
+				timeStamp: next
+			}
+		};
+
+		// A reset sample should have the correct internal state.
+		handleAssert(assert.deepEqual, [actual, expected], 'checkAfterReset');
+
+		timedSample.update([1, 0], now);
+		timedSample.update([1, 0], now);
+
+		actual = seDes(timedSample);
+
+		expected = {
+			type: 'timedSample',
+			value: {
+				min: 1000,
+				max: 1000,
+				sigma: 0,
+				average: 1000,
+				scaleFactor: 1,
+				timeStamp: now
+			}
+		};
+
+		// Updates after a reset should properly initialise standard deviation and average.
+		handleAssert(assert.deepEqual, [actual, expected], 'checkTwoTimedSamplesAfterParse');
 	}
 
 	testSet();
@@ -356,6 +476,144 @@ function auxClassTests() {
 	testTimedSample();
 }
 
+function panopticonTests(cb) {
+	cluster.setMaxListeners(0);
+
+	function testMultiple() {
+		var now = Date.now();
+		var panoptica = [];
+		var count = 10;
+
+		for (var i = 0; i < count; i++) {
+			panoptica.push(new Panopticon(now, i, 1000, 1, null, null));
+		}
+
+		handleAssert(assert.strictEqual, [Panopticon.count(), count], 'checkPanopticaCount');
+
+		panoptica.forEach(function (panopticon) {
+			panopticon.stop();
+		});
+	}
+
+	function testMissingInit() {
+		var panopticon = new Panopticon(null, 'testSingle', null, null, null, null);
+		var now = Date.now();
+
+		handleAssert(assert.strictEqual, [panopticon.interval, 10000], 'checkDefaultInterval');
+		handleAssert(assert.strictEqual, [panopticon.scaleFactor, 1], 'checkDefaultScaleFactor');
+
+		// By default the startTimes will be an integer number of intervals. As the panopticon was
+		// initialised in this tick, we can take the modulo of now with the interval size, and
+		// subtract it from now to get the startTime.
+		defaultStart = now - now % panopticon.interval;
+
+		handleAssert(assert.strictEqual, [panopticon.endTime, defaultStart + 10000], 'checkDefaultStartTime');
+
+		panopticon.stop();
+
+		handleAssert(assert.strictEqual, [panopticon.timer, null], 'checkStop');
+	}
+
+	function testDelivery(cb) {
+		var panopticon = new Panopticon(Date.now(), 'testDelivery', 50, 1, null, null);
+		var intervals = 0;
+
+		var timeOut = setTimeout(function () {
+			panopticon.stop();
+			handleAssert(assert.ok, [false], 'deliveryTimedOut');
+			return cb();
+		}, 170);
+
+		panopticon.on('sample', function (data) {
+			intervals += 1;
+			
+			if (intervals !== 3) {
+				return;
+			}
+
+			clearTimeout(timeOut);
+			timeout = null;
+
+			handleAssert(assert.ok, [true], 'deliveryBeforeTimeout');
+			handleAssert(assert.strictEqual, [typeof data === 'object' && Object.keys(data).length, 0], 'noInputYieldsEmptyData');
+			
+			panopticon.stop();
+
+			return cb();
+		});
+	}
+
+	function testPanopticonApi(cb) {
+		var panopticon = new Panopticon(Date.now(), 'testSet', 50, 1, true, null);
+		var counter = 0;
+
+		var timeOut = setTimeout(function () {
+			panopticon.stop();
+			handleAssert(assert.ok, [false], 'deliveryTimedOut');
+			return cb();
+		}, 120);
+
+		var halfTime = setTimeout(function () {
+			panopticon.set(null, 'testSet', 'someData');
+			panopticon.inc(['incPath'], 'testInc', 1);
+			panopticon.timedSample(['timedSamplePath', 'timedSampleSubPath'], 'testTimedSample', [0, 1]);
+			panopticon.timedSample(['timedSamplePath', 'timedSampleSubPath'], 'testTimedSample', null);
+			panopticon.sample([], 'testSample', 0.5);
+			panopticon.sample([], 'testSample', null);
+		}, 25);
+
+		var threeHalvesTime = setTimeout(function () {
+			panopticon.set([], 'testSet', 'someData');
+			panopticon.timedSample(['timedSamplePath', 'timedSampleSubPath'], 'testTimedSample', [0, 1]);
+			panopticon.timedSample(['timedSamplePath', 'timedSampleSubPath'], 'testTimedSample', [0, 0.5]);
+		}, 75);
+
+		panopticon.on('sample', function (data) {
+			if (counter !== 1) {
+				counter += 1;
+				return;
+			}
+
+			clearTimeout(timeOut);
+			timeout = null;
+			clearTimeout(halfTime);
+			halfTime = null;
+
+			var expected = {
+				testSet: { type: 'set', value: { val: 'someData', timeStamp: 0 } },
+				incPath: { testInc: { type: 'inc', value: { val: 0, timeStamp: 0 } } },
+				timedSamplePath: { timedSampleSubPath: { testTimedSample: { type: 'timedSample', value: { val: null, timeStamp: 0 } } } },
+				testSample: { testSample: { type: 'sample', value: { val: null, timeStamp: 0 } } }
+			};
+
+			var actual = seDes(data);
+
+			handleAssert(assert.ok, [true], 'deliveryBeforeTimeout');
+			handleAssert(assert.deepEqual, [Object.keys(actual), Object.keys(expected)], 'gotExpectedKeysWithPersistence');
+			handleAssert(assert.strictEqual, [actual.testSet.type, 'set'], 'gotExpectedTypeForSet');
+			handleAssert(assert.strictEqual, [actual.testSet.value.val, 'someData'], 'gotExpectedValForSet');
+			handleAssert(assert.strictEqual, [actual.incPath.testInc.type, 'inc'], 'gotExpectedTypeForInc');
+			handleAssert(assert.strictEqual, [actual.incPath.testInc.value.val, 0], 'gotExpectedValForInc');
+			handleAssert(assert.strictEqual, [actual.timedSamplePath.timedSampleSubPath.testTimedSample.type, 'timedSample'], 'gotExpectedTypeForTimedSample');
+			handleAssert(assert.strictEqual, [actual.timedSamplePath.timedSampleSubPath.testTimedSample.value.val, undefined], 'gotExpectedValForTimedSample');
+			handleAssert(assert.strictEqual, [actual.testSample.type, 'sample'], 'gotExpectedTypeForSet');
+			handleAssert(assert.strictEqual, [actual.testSample.value.val, undefined], 'gotExpectedValForSet');
+
+			panopticon.stop();
+
+			return cb();
+		});
+	}
+
+	testMultiple();
+	testMissingInit();
+	testDelivery(
+		testPanopticonApi(cb)
+	);
+}
+
 statisticsTests();
 auxClassTests();
-shutdown(0);
+panopticonTests(function () {
+	shutdown(0);
+});
