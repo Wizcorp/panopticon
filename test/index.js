@@ -240,7 +240,7 @@ function auxClassTests() {
 		actual = seDes(inc);
 
 		// Initialising with 0 should set the initial value as 0.
-		handleAssert(assert.deepEqual, [actual, expected], 'checkNullIncAfterParse');
+		handleAssert(assert.deepEqual, [actual, expected], 'checkZeroIncAfterParse');
 
 		var next = now + 10;
 		inc.update(0, next);
@@ -251,7 +251,7 @@ function auxClassTests() {
 		actual = seDes(inc);
 
 		// Incrementing by zero should result in no change.
-		handleAssert(assert.deepEqual, [actual, expected], 'checkZeroIncAfterParse');
+		handleAssert(assert.deepEqual, [actual, expected], 'checkZeroIncAfterIncrementParse');
 
 		expected.value.val = 1;
 		expected.value.timeStamp = now;
