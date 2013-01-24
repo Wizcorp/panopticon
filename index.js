@@ -89,6 +89,7 @@ function resetData(panopticon) {
 
 function timeUp(panopticon) {
 	var now = Date.now();
+	var shouldEmit = false;
 
 	if (panopticon.endTime <= now) {
 
@@ -97,12 +98,7 @@ function timeUp(panopticon) {
 			panopticon.endTime += panopticon.interval;
 		} while (panopticon.endTime <= now);
 
-		// Emit the sample! Emitting the interval as well allows us to distinguish between separate
-		// panoptica running in parallel.
-		panopticon.emit('sample', panopticon.data, panopticon.id);
-
-		// Reset the data.
-		resetData(panopticon);
+		shouldEmit = true; // Use this to tell us if we should be emitting a sample or not.
 
 		// Reset the timeout.
 		if (panopticon.timer) {
@@ -115,12 +111,22 @@ function timeUp(panopticon) {
 	// to fire early sometimes. If that happens then the above evaluates to false, but the below
 	// resets the timer, thus handling the issue. If the timer legitimately fires, then the below
 	// acts to reset it.
-
 	if (!panopticon.timer) {
 		panopticon.timer = setTimeout(function () {
 			panopticon.timer = null;
 			timeUp(panopticon);
 		}, panopticon.endTime - now);
+	}
+
+	// If the interval was really over, we do this. It's down here because this allows up to stop
+	// clear panopticon.timer on 'sample' without the timer getting restarted.
+	if (shouldEmit) {
+		// Emit the sample! Emitting the interval as well allows us to distinguish between separate
+		// panoptica running in parallel.
+		panopticon.emit('sample', panopticon.data, panopticon.id);
+
+		// Reset the data.
+		resetData(panopticon);
 	}
 }
 
@@ -257,6 +263,34 @@ function setupDelivery(panopticon) {
 
 
 /**
+ * Create listeners for messages from a worker for a panopticon instance.
+ *
+ * @param {object} panopticon
+ * @param {object} worker
+ */
+
+function setupMessageHandler(panopticon, worker) {
+	function onMessage(message) {
+		if (message.event === 'workerSample' && message.id === panopticon.id) {
+
+			// Apply transform to raw data.
+			var transformed = panopticon.transform(message.sample, worker.id);
+
+			// Merge raw data with master data
+			merge(panopticon.aggregated.data, transformed);
+		}
+	}
+
+	worker.on('message', onMessage);
+
+	// If a worker dies, release listener.
+	worker.once('exit', function () {
+		worker.removeListener('message', onMessage);
+	});
+}
+
+
+/**
  * Handles sample sets emitted by itself and sent to the master by workers.
  *
  * @param {Object} panopticon The scope to operate on.
@@ -280,35 +314,23 @@ function masterSetup(panopticon) {
 		merge(panopticon.aggregated.data, transformed);
 	});
 
-	// Create listeners for messages from workers, both for existing workers and workers that are
-	// spawned in the future.
-	function setupMessageHandler(worker) {
-		function onMessage(message) {
-			if (message.event === 'workerSample' && message.id === panopticon.id) {
-
-				// Apply transform to raw data.
-				var transformed = panopticon.transform(message.sample, worker.id);
-
-				// Merge raw data with master data
-				merge(panopticon.aggregated.data, transformed);
-			}
-		}
-
-		worker.on('message', onMessage);
-
-		// If a worker dies, release listener.
-		worker.once('exit', function () {
-			worker.removeListener('message', onMessage);
-		});
-	}
+	// This closure allows us to unregister this listener when this panopticon shuts down.
+	var messageHandler = function (worker) {
+		setupMessageHandler(panopticon, worker);
+	};
 
 	// Collect samples emitted by existing workers.
 	Object.keys(cluster.workers).forEach(function (workerId) {
-		setupMessageHandler(cluster.workers[workerId]);
+		messageHandler(cluster.workers[workerId]);
 	});
 
 	// If a new worker is spawned, listen to it.
-	cluster.on('fork', setupMessageHandler);
+	cluster.on('fork', messageHandler);
+
+	// If the panopticon is stopped, we should remove the listener.
+	panopticon.once('stopping', function () {
+		cluster.removeListener('fork', messageHandler);
+	});
 }
 
 
@@ -419,7 +441,6 @@ Panopticon.prototype.inc = function (path, id, n) {
  * @param n Data to set. This is not restricted to numbers.
  */
 
-
 Panopticon.prototype.set = function (path, id, n) {
 	augment(this, SetLog, path, id, n);
 };
@@ -430,6 +451,8 @@ Panopticon.prototype.set = function (path, id, n) {
  */
 
 Panopticon.prototype.stop = function () {
+	this.emit('stopping'); // This is used to remove the cluster.fork listener on master.
+
 	this.removeAllListeners();
 
 	clearTimeout(this.halfInterval);
