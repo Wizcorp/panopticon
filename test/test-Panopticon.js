@@ -2,7 +2,6 @@ var Panopticon = require(__dirname + '/../index');
 var cluster = require('cluster');
 
 var now = Date.now();
-var next = now + 5000;
 
 function seDes(obj) {
 	return JSON.parse(JSON.stringify(obj));
@@ -65,7 +64,7 @@ exports['instantiation without interval is treated as 10000ms'] = function (test
 	test.done();
 };
 
-exports['test delivery'] = function (test) { // Seems to block nodeunit exit.
+exports['test delivery'] = function (test) {
 	test.expect(1);
 
 	var panopticon = new Panopticon(Date.now(), 'testDelivery', 50, 1, null, null);
@@ -80,6 +79,12 @@ exports['test delivery'] = function (test) { // Seems to block nodeunit exit.
 
 	panopticon.on('sample', function (data) {
 		intervals += 1;
+
+		if (intervals === 1) {
+			setTimeout(function () {
+				panopticon.set([], 'should get removed', 'some info');
+			}, 15);
+		}
 
 		if (intervals !== 3) {
 			return;
@@ -190,4 +195,52 @@ exports['test api'] = function (test) {
 
 		test.done();
 	});
+};
+
+exports['test worker process panopticon'] = function (test) {
+	test.expect(5);
+
+	// Simple way of faking being on a cluster worker.
+	cluster.isWorker = true;
+	cluster.isMaster = false;
+
+	var messages = 0;
+	var id;
+	var expected;
+
+	// process.send is not a method on the master process. We can safely monkey patch it.
+	process.send = function (message) {
+		if (message.event !== 'workerSample') { // Not the droids you're looking for.
+			return;
+		}
+
+		test.deepEqual(message, expected);
+
+		// Do this test 5 times.
+		if (messages < 4) {
+			messages += 1;
+			return;
+		}
+
+		panopticon.stop();
+
+		// Return cluster module to normal.
+		cluster.isWorker = false;
+		cluster.isMaster = true;
+
+		// The patch is no longer needed, so we remove it.
+		delete process.send;
+
+		return test.done();
+	};
+
+	var panopticon = new Panopticon(Date.now(), 'testSet', 100, 1, true, null);
+	
+	id = panopticon.id;
+
+	expected = {
+		event: 'workerSample',
+		sample: {},
+		id: id
+	};
 };

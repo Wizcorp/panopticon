@@ -21,17 +21,19 @@ var instanceCount = 0;
  */
 
 function merge(master, supplement) {
-	if (typeof supplement !== 'object') {
+	if (typeof supplement !== 'object' || supplement === null) {
 		return;
 	}
 
-	for (var key in supplement) {
-		if (supplement.hasOwnProperty(key)) {
-			if (master.hasOwnProperty(key)) {
-				merge(master[key], supplement[key]);
-			} else {
-				master[key] = supplement[key];
-			}
+	var keys = Object.keys(supplement);
+
+	for (var i = 0, len = keys.length; i < len; i += 1) {
+		var key = keys[i];
+
+		if (master.hasOwnProperty(key)) {
+			merge(master[key], supplement[key]);
+		} else {
+			master[key] = supplement[key];
 		}
 	}
 }
