@@ -244,3 +244,23 @@ exports['test worker process panopticon'] = function (test) {
 		id: id
 	};
 };
+/*
+exports['handle early timeout firing'] = function (test) {
+	test.expect(1);
+
+	var panoptica = [];
+	var count = 10;
+
+	for (var i = 0; i < count; i++) {
+		panoptica.push(new Panopticon(now, i, 1*(i*i), 1, null, null));
+	}
+
+	setTimeout(function () {
+		panoptica.forEach(function (panopticon) {
+			panopticon.stop();
+		});
+		test.ok(true);
+		test.done();
+	}, 1000);
+};
+*/

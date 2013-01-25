@@ -51,7 +51,7 @@ exports['check single sample after parse with persist'] = function (test) {
 	test.done();
 };
 
-exports['check single sample after update and parse with persist'] = function (test) {
+exports['check sample after update and parse with persist'] = function (test) {
 	test.expect(1);
 
 	var emitter = new EventEmitter();
@@ -60,7 +60,7 @@ exports['check single sample after update and parse with persist'] = function (t
 	sample.update(1, now);
 	var actual = seDes(sample);
 
-	expected = {
+	var expected = {
 		type: 'sample',
 		value: {
 			min: 1,
@@ -83,7 +83,7 @@ exports['check single sample after with persist and reset'] = function (test) {
 
 	sample.update(1, now);
 
-	expected = {
+	var expected = {
 		type: 'sample',
 		value: {
 			min: null,

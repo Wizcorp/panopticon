@@ -123,6 +123,7 @@ function timeUp(panopticon) {
 	// If the interval was really over, we do this. It's down here because this allows up to stop
 	// clear panopticon.timer on 'sample' without the timer getting restarted.
 	if (shouldEmit) {
+
 		// Emit the sample! Emitting the interval as well allows us to distinguish between separate
 		// panoptica running in parallel.
 		panopticon.emit('sample', panopticon.data, panopticon.id);
