@@ -248,9 +248,9 @@ function initAggregate(panopticon) {
 
 function setupDelivery(panopticon) {
 	// Wait half an interval before beginning the delivery interval.
-	var beginReporting = panopticon.endTime + panopticon.interval / 2;
+	var beginReporting = panopticon.interval / 2;
 
-	panopticon.halfInterval = setTimeout(function () {
+	panopticon.halfInterval = setTimeout(function () { //TODO make all timeouts
 
 		// Begin reporting 0.5th intervals after the first endTime. This way reports are emitted
 		// well away from when batches are collected.

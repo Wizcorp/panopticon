@@ -3,10 +3,6 @@ var cluster = require('cluster');
 
 var now = Date.now();
 
-function seDes(obj) {
-	return JSON.parse(JSON.stringify(obj));
-}
-
 exports['test count static method'] = function (test) {
 	test.expect(1);
 
@@ -65,9 +61,10 @@ exports['instantiation without interval is treated as 10000ms'] = function (test
 };
 
 exports['test delivery'] = function (test) {
-	test.expect(1);
+	test.expect(4);
+	var interval = 25;
 
-	var panopticon = new Panopticon(Date.now(), 'testDelivery', 50, 1, null, null);
+	var panopticon = new Panopticon(Date.now(), 'testDelivery', interval, 1, false, null);
 	var intervals = 0;
 
 	var timeOut = setTimeout(function () {
@@ -75,23 +72,25 @@ exports['test delivery'] = function (test) {
 
 		test.ok(false, 'delivery timed out');
 		test.done();
-	}, 1000);
+	}, 1300);
 
-	panopticon.on('sample', function (data) {
+	//panopticon.set(null, 'should get removed', 'some info');
+
+	panopticon.on('delivery', function (data) {
 		intervals += 1;
 
 		if (intervals === 1) {
-			setTimeout(function () {
-				panopticon.set([], 'should get removed', 'some info');
-			}, 15);
+			panopticon.set(null, 'should get removed', 'some info');
 		}
 
 		if (intervals !== 3) {
 			return;
 		}
 
-		test.ok(typeof data === 'object' && Object.keys(data).length === 0);
-
+		test.ok(typeof data === 'object', 'panopticon.delivery should yield an object');
+		test.strictEqual(data.id, panopticon.id, 'id in delivery should match panopticon.id');
+		test.strictEqual(data.interval, interval, 'interval of delivery should match panopticon.interval');
+		test.ok(data.data.hasOwnProperty('master') && JSON.stringify(data.data.master) === '{}', 'non-persistent panopticon should have empty data if no data was acquired in last interval, got ' + JSON.stringify(data.data.master, null, '  '));
 
 		panopticon.stop();
 		clearTimeout(timeOut);
@@ -102,33 +101,37 @@ exports['test delivery'] = function (test) {
 };
 
 exports['test api'] = function (test) {
-	var panopticon = new Panopticon(Date.now(), 'testSet', 50, 1, true, null);
+	var interval = 200;
+	var scaleFactor = 1;
+
+	var panopticon = new Panopticon(Date.now(), 'testApi', interval, scaleFactor, true, null);
 	var counter = 0;
 
 	var timeOut = setTimeout(function () {
 		panopticon.stop();
 		test.done();
-	}, 120);
+	}, 160);
 
-	var halfTime = setTimeout(function () {
-		panopticon.set(null, 'testSet', 'someData');
-		panopticon.inc(['incPath'], 'testInc', 1);
-		panopticon.timedSample(['timedSamplePath', 'timedSampleSubPath'], 'testTimedSample', [0, 1]);
-		panopticon.timedSample(['timedSamplePath', 'timedSampleSubPath'], 'testTimedSample', null);
-		panopticon.sample([], 'testSample', 0.5);
-		panopticon.sample([], 'testSample', null);
-	}, 25);
+	//var halfTime = setTimeout(function () {
+	panopticon.set(null, 'testSet', 'someData');
+		//panopticon.timedSample(['timedSamplePath', 'timedSampleSubPath'], 'testTimedSample', [1, 0]);
+		//panopticon.timedSample(['timedSamplePath', 'timedSampleSubPath'], 'testTimedSample', null);
+	panopticon.sample([], 'testSample', 0.5);
+		//panopticon.sample([], 'testSample', null);
+	//}, 10);
 
 	var threeHalvesTime = setTimeout(function () {
-		panopticon.set([], 'testSet', 'someData');
-		panopticon.timedSample(['timedSamplePath', 'timedSampleSubPath'], 'testTimedSample', [0, 1]);
-		panopticon.timedSample(['timedSamplePath', 'timedSampleSubPath'], 'testTimedSample', [0, 0.5]);
-	}, 75);
+		panopticon.inc(['incPath'], 'testInc', 1);
 
-	panopticon.on('sample', function (data) {
-		test.expect(9);
+		//panopticon.set([], 'testSet', 'someData');
+		panopticon.timedSample(['timedSamplePath', 'timedSampleSubPath'], 'testTimedSample', [1, 0]);
+		panopticon.timedSample(['timedSamplePath', 'timedSampleSubPath'], 'testTimedSample', [1, 0]);
+	}, 135);
 
-		if (counter !== 1) {
+	panopticon.on('delivery', function (data) {
+		test.expect();
+
+		if (counter !== 2) {
 			counter += 1;
 			return;
 		}
@@ -137,61 +140,17 @@ exports['test api'] = function (test) {
 
 		clearTimeout(timeOut);
 		timeOut = null;
-		clearTimeout(halfTime);
-		halfTime = null;
+		//clearTimeout(halfTime);
+		//halfTime = null;
 		clearTimeout(threeHalvesTime);
 		threeHalvesTime = null;
 
-		var expected = {
-			testSet: {
-				type: 'set',
-				value: {
-					val: 'someData',
-					timeStamp: 0
-				}
-			},
-			incPath: {
-				testInc: {
-					type: 'inc',
-					value: {
-						val: 0,
-						timeStamp: 0
-					}
-				}
-			},
-			timedSamplePath: {
-				timedSampleSubPath: {
-					testTimedSample: {
-						type: 'timedSample',
-						value: {
-							val: null,
-							timeStamp: 0
-						}
-					}
-				}
-			},
-			testSample: {
-				testSample: {
-					type: 'sample',
-					value: {
-						val: null,
-						timeStamp: 0
-					}
-				}
-			}
-		};
-
-		var actual = seDes(data);
-
-		test.deepEqual(Object.keys(actual), Object.keys(expected));
-		test.strictEqual(actual.testSet.type, 'set');
-		test.strictEqual(actual.testSet.value.val, 'someData');
-		test.strictEqual(actual.incPath.testInc.type, 'inc');
-		test.strictEqual(actual.incPath.testInc.value.val, 0);
-		test.strictEqual(actual.timedSamplePath.timedSampleSubPath.testTimedSample.type, 'timedSample');
-		test.strictEqual(actual.timedSamplePath.timedSampleSubPath.testTimedSample.value.val, undefined);
-		test.strictEqual(actual.testSample.type, 'sample');
-		test.strictEqual(actual.testSample.value.val, undefined);
+		test.strictEqual(data.name, 'testApi', 'the name of delivered data was incorrect');
+		test.strictEqual(data.id, panopticon.id, 'id from data and id of panopticon should match');
+		test.strictEqual(data.data.master.testSet.value.val, 'someData');
+		test.strictEqual(data.data.master.incPath.testInc.value.val, scaleFactor / interval);
+		test.strictEqual(data.data.master.testSample.value.max, null);
+		test.strictEqual(data.data.master.timedSamplePath.timedSampleSubPath.testTimedSample.value.average, 1000);
 
 		test.done();
 	});
