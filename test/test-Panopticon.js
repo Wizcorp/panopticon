@@ -4,6 +4,7 @@ var cluster = require('cluster');
 var now = Date.now();
 
 exports['test count static method'] = function (test) {
+	Panopticon._resetCount();
 	test.expect(1);
 
 	var panoptica = [];
@@ -203,23 +204,87 @@ exports['test worker process panopticon'] = function (test) {
 		id: id
 	};
 };
-/*
-exports['handle early timeout firing'] = function (test) {
-	test.expect(1);
 
-	var panoptica = [];
-	var count = 10;
+exports['try cluster'] = function (test) {
+	test.expect(7);
 
-	for (var i = 0; i < count; i++) {
-		panoptica.push(new Panopticon(now, i, 1*(i*i), 1, null, null));
-	}
+	Panopticon._resetCount();
+	var start = Date.now();
 
-	setTimeout(function () {
-		panoptica.forEach(function (panopticon) {
-			panopticon.stop();
-		});
+	var panopticon = new Panopticon(start, 'testSet', 100, 1, true, null);
+	panopticon.inc(['incpath'], 'testInc', 1);
+
+	var count = 0;
+
+	cluster.setupMaster({
+		exec: __dirname + '/scripts/worker.js',
+		args: [start],
+		silent: false
+	});
+
+	var worker1 = cluster.fork();
+	var worker2 = cluster.fork();
+
+	panopticon.on('delivery', function (data) {
+		if (count !== 1) {
+			count++;
+			return;
+		}
+
+		test.ok(data.data.workers);
+		test.strictEqual(Object.keys(data.data.workers).length, 2);
+		test.ok(data.data.workers[worker1.id]);
+		test.ok(data.data.workers[worker2.id]);
+
+		var workerData1 = data.data.workers[worker1.id];
+		var workerData2 = data.data.workers[worker2.id];
+
+		test.strictEqual(workerData1['my name is'].value.val, 'slim shady');
+		test.strictEqual(workerData2['my name is'].value.val, 'slim shady');
+
+		worker1.destroy();
+		worker2.destroy();
+	});
+
+	var disconnects;
+
+	cluster.on('disconnect', function () {
+		if (!disconnects) {
+			disconnects = true;
+			return;
+		}
+
+		panopticon.stop();
+
 		test.ok(true);
 		test.done();
-	}, 1000);
+	});
 };
-*/
+
+exports['bad sample should add no data'] = function (test) {
+	test.expect(1);
+
+	var panopticon = new Panopticon(Date.now(), 'badSample', 100, 1, true, null);
+	panopticon.sample([], 'a sample', 'junk');
+
+	panopticon.on('delivery', function (data) {
+		panopticon.stop();
+
+		test.strictEqual(JSON.stringify(data.data.master), '{}');
+		test.done();
+	});
+};
+
+exports['bad timed sample should add no data'] = function (test) {
+	test.expect(1);
+
+	var panopticon = new Panopticon(Date.now(), 'badTimedSample', 100, 1, true, null);
+	panopticon.timedSample([], 'a timed sample', 'junk');
+
+	panopticon.on('delivery', function (data) {
+		panopticon.stop();
+
+		test.strictEqual(JSON.stringify(data.data.master), '{}');
+		test.done();
+	});
+};

@@ -24,7 +24,7 @@ where startTime (ms since the unix epoch) is an optional time to start from, int
 
 If no value is passed in for `scaleFactor`, it defaults to `1` (reports in kHz). Panopticon internally calculates the rate of increments, so it needs to be told if this scale is wrong. For example, to change the reporting of incrementers to Hz, set this value to 1000. This only affects incrementers, since these are counted up over an interval and then divided by the length of an interval to estimate increments per millisecond (kHz). Sets and samples are your responsibility, so if these should be reporting in something other than kHz for those, then you must give panopticon the data in the scale desired.
 
-The next section gives detail on `persist` which is boolean. Finally, `transformer is an optional function to rearrange the logged data.`
+The next section gives detail on `persist` which is boolean. Finally, `transformer` is an optional function to rearrange the logged data.`
 
 It is important to note that for consistent sample collection, when startTime is given it must be the same across all workers and the master.
 
@@ -90,7 +90,9 @@ var server = require('http').createServer(function (req, res) {
     /* You probably want to do other stuff... */
 });
 ```
+
 Now after ten requests in an interval, the panopticon master will make an object available via its `query` method. If no path is given it assumes that you want a full report. With logType off you'll get something like:
+
 ```json
 {
     "id": 0,
@@ -128,3 +130,21 @@ To differentiate between different panoptica, each aggregated data has an `id` k
 The node.js implementation of setTimeout is buggy. The resulting timeout can (and does) fire early sometimes, contrary to expectations. This lead to some acrobatics to ensure that when it does fire early, it is reinitialised. This can be seen in `Panopticon.prototype.timeUp`.
 
 The standard deviation method used by `panopticon.sample` is single pass. This leaves it more prone than a two pass algorithm to round off errors. A single pass method is used to avoid growing arrays whilst accumulating a batch. The specific algorithm used is the one found in *The Art of Computer Programming, Volume 2: Seminumerical Algorithms*, section 4.2.2.
+
+## Testing
+
+Tests for Panopticon are written in nodeunit. To run them, execute the following command in the Panopitcon directory:
+
+```bash
+nodeunit test
+```
+
+If you want to inspect the test coverage, use the following:
+
+```bash
+istanbul coverage nodeunit test
+istanbul report html
+open coverage/index.html
+```
+
+(the last line assumes that you're on a mac)

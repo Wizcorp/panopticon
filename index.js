@@ -479,6 +479,13 @@ Panopticon.count = function () {
 	return instanceCount;
 };
 
+/**
+ * Used for unit testing to reset the panopticon count. Do not use.
+ */
+Panopticon._resetCount = function () {
+	instanceCount = 0;
+};
+
 
 // This is a constructor-module, so the only thing on module.exports is the constructor itself.
 module.exports = Panopticon;
