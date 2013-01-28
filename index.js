@@ -1,4 +1,7 @@
-/** @module Panopticon */
+/**
+ * @module Panopticon
+ * @author Mark S. Everitt
+ */
 var EventEmitter   = require('events').EventEmitter;
 var cluster        = require('cluster');
 var util           = require('util');
@@ -248,9 +251,9 @@ function initAggregate(panopticon) {
 
 function setupDelivery(panopticon) {
 	// Wait half an interval before beginning the delivery interval.
-	var beginReporting = panopticon.interval / 2;
+	var beginReporting = panopticon.endTime - Date.now() - panopticon.interval / 2;
 
-	panopticon.halfInterval = setTimeout(function () { //TODO make all timeouts
+	panopticon.halfInterval = setTimeout(function () {
 
 		// Begin reporting 0.5th intervals after the first endTime. This way reports are emitted
 		// well away from when batches are collected.
@@ -268,8 +271,9 @@ function setupDelivery(panopticon) {
 /**
  * Create listeners for messages from a worker for a panopticon instance.
  *
- * @param {object} panopticon
- * @param {object} worker
+ * @param {Object} panopticon
+ * @param {Object} worker
+ * @private
  */
 
 function setupMessageHandler(panopticon, worker) {
@@ -480,7 +484,7 @@ Panopticon.count = function () {
 };
 
 /**
- * Used for unit testing to reset the panopticon count. Do not use.
+ * Used for unit testing to reset the panopticon count. DO NOT USE.
  */
 Panopticon._resetCount = function () {
 	instanceCount = 0;
