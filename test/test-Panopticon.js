@@ -75,13 +75,13 @@ exports['test delivery'] = function (test) {
 		test.done();
 	}, 1300);
 
-	//panopticon.set(null, 'should get removed', 'some info');
+	panopticon.set(null, 'should get removed', 'some info');
 
 	panopticon.on('delivery', function (data) {
 		intervals += 1;
 
 		if (intervals === 1) {
-			panopticon.set(null, 'should get removed', 'some info');
+			panopticon.set(null, 'should also get removed', 'some info');
 		}
 
 		if (intervals !== 3) {
