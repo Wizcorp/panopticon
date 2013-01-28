@@ -133,7 +133,7 @@ The standard deviation method used by `panopticon.sample` is single pass. This l
 
 ## Testing
 
-Tests for Panopticon are written in nodeunit. To run them, execute the following command in the Panopitcon directory:
+Tests for Panopticon are written in nodeunit. To run them, execute the following command in the Panopticon directory:
 
 ```bash
 nodeunit test

@@ -113,13 +113,8 @@ exports['test api'] = function (test) {
 		test.done();
 	}, 160);
 
-	//var halfTime = setTimeout(function () {
 	panopticon.set(null, 'testSet', 'someData');
-		//panopticon.timedSample(['timedSamplePath', 'timedSampleSubPath'], 'testTimedSample', [1, 0]);
-		//panopticon.timedSample(['timedSamplePath', 'timedSampleSubPath'], 'testTimedSample', null);
 	panopticon.sample([], 'testSample', 0.5);
-		//panopticon.sample([], 'testSample', null);
-	//}, 10);
 
 	var threeHalvesTime = setTimeout(function () {
 		panopticon.inc(['incPath'], 'testInc', 1);
