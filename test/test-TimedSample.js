@@ -100,7 +100,7 @@ exports['check parse after reset and two samples'] = function (test) {
 	var timedSample = new TimedSampleClass([1, 0], now, emitter, 1);
 	timedSample.update([1, 0], next);
 
-	expected = {
+	var expected = {
 		type: 'timedSample',
 		value: {
 			min: 1000,
