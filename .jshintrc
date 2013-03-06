@@ -1,0 +1,61 @@
+{
+    "bitwise" : true,  // true -> no bitwise operators
+    "curly"   : true,  // true -> require {} for blocks
+    "eqeqeq"  : true,  // true -> require ===
+    "forin"   : true,  // true -> require `for in` loops to have `hasOwnPrototype`
+    "immed"   : true,  // true -> require immediate invocations to be wrapped in parens e.g. `( function(){}() );`
+    "latedef" : true,  // true -> no variable use before definition
+    "newcap"  : true,  // true -> require capitalization of all constructor functions
+    "noarg"   : true,  // true -> no `arguments.caller` or `arguments.callee`
+    "noempty" : true,  // true -> no empty blocks
+    "nonew"   : true,  // true -> no use of constructors for side-effects
+    "plusplus": true,  // true -> No use of `++` & `--`
+    "regexp"  : true,  // true -> No `.` or `[^...]` in regular expressions
+    "undef"   : true,  // true -> all non-global variables must be declared before they are used
+    "strict"  : false, // true ->  require `use strict` pragma in every file
+    "trailing": true,  // true -> no trailing whitespaces
+    
+    // Relaxing Options
+    
+    "asi"         : false, // false -> no automatic semicolons
+    "boss"        : true,  // false -> no assignments inside if, for and while
+    "debug"       : false, // false -> no debugger statements
+    "eqnull"      : false, // false -> no use of `== null`
+    "es5"         : false, // false -> no ES5 syntax
+    "esnext"      : false, // false -> no  ES.next specific features such as `const` and `let`
+    "evil"        : false, // false -> no use of `eval`
+    "expr"        : false, // false -> no `ExpressionStatement` as programs
+    "funcscope"   : false, // false -> no declaration of variables inside of control structures while accessing them later from the outside
+    "globalstrict": false, // false -> no global "use strict" (also enables 'strict')
+    "iterator"    : false, // false -> no usage of __iterator__ property
+    "lastsemic"   : false, // false -> no missing semicolons when the it is omitted for the last statement in a one-line block
+    "laxbreak"    : false, // false -> no unsafe line breaks without semicolons
+    "laxcomma"    : false, // false -> no comma-first coding style
+    "loopfunc"    : false, // false -> no function definitions within loops
+    "multistr"    : false, // false -> no multi-line strings
+    "onecase"     : false, // false -> no switches with just one case.
+    "proto"       : false, // false -> no use of __proto__ property
+    "regexdash"   : false, // false -> no unescaped last dash i.e. `[-...]`
+    "scripturl"   : false, // false -> no script-targeted URLs
+    "smarttabs"   : true,  // false -> no mixed tabs and spaces when the latter are used for alignmnent only
+    "shadow"      : false, // false -> no re-defining variables later in code e.g. `var x=1; x=2;`
+    "sub"         : false, // false -> no use of subscript notation besides dot notation e.g. `dict['key']` instead of `dict.key`
+    "supernew"    : false, // false -> no `new function () { ... };` or `new Object;`
+    "validthis"   : false, // false -> no strict violations allowed when the code is running in strict mode and you use this in a non-constructor function
+    
+    // Environments
+    
+    "browser"    : false, // false -> no browser globals e.g. `window`, `document`
+    "couch"      : false, // false -> no globals exposed by CouchDB
+    "devel"      : false, // false -> no development statements e.g. `console.log();`
+    "dojo"       : false, // false -> no globals exposed by Dojo Toolkit
+    "jquery"     : false, // false -> no globals exposed by jQuery JavaScript library
+    "mootools"   : false, // false -> no globals exposed by MooTools JavaScript framework
+    "node"       : true,  // false -> no globals available when code is running inside of the NodeJS runtime environment
+    "nonstandard": false, // false -> no non-standard but widely adopted globals such as escape and unescape
+    "prototypejs": false, // false -> no globals exposed by Prototype JavaScript framework
+    "rhino"      : false, // false -> no globals available when your code is running inside of the Rhino runtime environment
+    "wsh"        : false, // false -> no globals available when your code is running as a script for the Windows Script Host
+
+    "quotmark": "single"
+}

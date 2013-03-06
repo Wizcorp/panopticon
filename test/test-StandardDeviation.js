@@ -1,4 +1,4 @@
-var StandardDeviation = require(__dirname + '/../StandardDeviation');
+var StandardDeviation = require(__dirname + '/../lib/StandardDeviation');
 
 function seDes(obj) {
 	return JSON.parse(JSON.stringify(obj));

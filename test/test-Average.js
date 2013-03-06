@@ -1,4 +1,4 @@
-var Average = require(__dirname + '/../Average');
+var Average = require(__dirname + '/../lib/Average');
 
 function seDes(obj) {
 	return JSON.parse(JSON.stringify(obj));

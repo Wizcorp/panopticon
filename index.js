@@ -5,10 +5,10 @@
 var EventEmitter   = require('events').EventEmitter;
 var cluster        = require('cluster');
 var util           = require('util');
-var SetLog         = require('./Set');
-var IncLog         = require('./Inc');
-var SampleLog      = require('./Sample');
-var TimedSampleLog = require('./TimedSample');
+var SetLog         = require('./lib/Set');
+var IncLog         = require('./lib/Inc');
+var SampleLog      = require('./lib/Sample');
+var TimedSampleLog = require('./lib/TimedSample');
 
 // id gets incremented with each new panopticon. This allows us to have multiple panoptica running
 // in parallel without master panoptica getting messages from multiple panoptica on each worker.
@@ -485,7 +485,10 @@ Panopticon.count = function () {
 
 /**
  * Used for unit testing to reset the panopticon count. DO NOT USE.
+ *
+ * @private
  */
+
 Panopticon._resetCount = function () {
 	instanceCount = 0;
 };

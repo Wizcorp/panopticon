@@ -1,5 +1,5 @@
 var EventEmitter = require('events').EventEmitter;
-var IncClass = require(__dirname + '/../Inc');
+var IncClass = require(__dirname + '/../lib/Inc');
 
 function seDes(obj) {
 	return JSON.parse(JSON.stringify(obj));

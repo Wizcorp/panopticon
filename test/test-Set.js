@@ -1,5 +1,5 @@
 var EventEmitter = require('events').EventEmitter;
-var SetClass = require(__dirname + '/../Set');
+var SetClass = require(__dirname + '/../lib/Set');
 
 function seDes(obj) {
 	return JSON.parse(JSON.stringify(obj));

@@ -1,5 +1,5 @@
 var EventEmitter = require('events').EventEmitter;
-var TimedSampleClass = require(__dirname + '/../TimedSample');
+var TimedSampleClass = require(__dirname + '/../lib/TimedSample');
 
 function seDes(obj) {
 	return JSON.parse(JSON.stringify(obj));

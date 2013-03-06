@@ -1,0 +1,37 @@
+{
+  "name": "Panopticon",
+  "version": "0.1.0",
+  "description": "Data acquisition for applications that use the cluster module.",
+  "contributors": [ 
+    { "name": "Mark Stanley Everitt", "email": "meveritt@wizcorp.jp" },
+    { "name": "Tom Farmer", "email": "tfarmer@wizcorp.jp"}
+  ],
+  "main": "index.js",
+  "devDependencies": {
+    "nodeunit": "0.7.x",
+    "istanbul": "0.1.x",
+    "jshint": "1.1.x"
+  },
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "nodeunit test",
+    "cover": "istanbul cover nodeunit test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Wizcorp/panopticon"
+  },
+  "engines": {
+    "node": ">=0.8"
+  },
+  "keywords": [
+    "sampling",
+    "cluster"
+  ],
+  "author": "Wizcorp, Inc. <info@wizcorp.jp>",
+  "license": "MIT",
+  "readmeFilename": "README.md",
+  "homepage": "http://documentup.com/Wizcorp/panopticon"
+}
