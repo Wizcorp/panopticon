@@ -1,4 +1,4 @@
-# Panopticon
+![Panopticon](https://raw.github.com/qubyte/panopticon/blob/develop/icon.png)
 
 ## Introduction
 
