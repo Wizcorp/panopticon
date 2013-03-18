@@ -1,4 +1,4 @@
-![Panopticon](https://raw.github.com/qubyte/panopticon/blob/develop/icon.png)
+![Panopticon](https://raw.github.com/qubyte/panopticon/develop/icon.png)
 
 ## Introduction
 
