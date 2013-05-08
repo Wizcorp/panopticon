@@ -122,3 +122,80 @@ open coverage/lcov-report/index.html
 Contributions are welcome! Please observe the coding style of Panopticon. If you add functionality, then this *must* be accompanied by tests. If you break tests, you must have a good reason for doing so and provide updates to existing tests to fix the breakages. Please run JavaScript files changed in your branch through jshint to catch problems. A jshint config file is provided, and jshint is installed as a development dependency.
 
 Panopticon was something of an experiment in using node.js module architecture best practices. Throughout it uses the *module-constructor* pattern, a form of the substack pattern. Every JavaScript file exposes a constructor function on `module.exports`. Whatever your thoughts on this, please abide by the choices made for this module.
+
+# API
+
+## Class: `Panopticon`
+
+Instances are event emitters.
+
+### `Panopticon.count`
+
+Returns the number of panopticon instances that have been started. Useful for testing.
+
+### `Panopticon._reset`
+
+Resets the count of instances. Strictly for testing use only. Do not use this.
+
+### Event: 'delivery'
+
+```javascript
+function (data) { }
+```
+
+Master only. A panopticon instance emits this event when it has a dataset object to deliver.
+
+### Event: 'sample'
+
+```javascript
+function(data, id) { }
+```
+
+Master and workers. A panopticon instance emits this event when it has data to be
+aggregated. This is a private event and should not be acted upon. Use the 'delivery' event.
+
+### Event: 'newInterval'
+
+```javascript
+function () { }
+```
+
+Master and workers. A panopticon instance emits this event when a new interval begins. This is
+useful for sets, which may be useful to do once per interval.
+
+### Event: 'reset'
+
+```javascript
+function () { }
+```
+
+Master and workers. If the panopticon instance is persistent, then this event is emitted at the end
+of an interval, immediately before 'newInterval'.
+
+### Event: 'stopping'
+
+```javascript
+Master and workers. Emitted when `panopticon.stop()` is called.
+```
+
+### `panopticon.sample(path, id, n)`
+
+The sample method keeps track of the maximum, minimum and standard deviation of `n` over multiple
+calls in an interval. The sample is registered to the aggregated object on the given `path` with a
+key given by `id`.
+
+### `panopticon.timedSample(path, id, dt)`
+
+Similar to the sample method, but instead of a number `n` it takes `dt`, the result of a [high
+resolution timer](http://nodejs.org/api/process.html#process_process_hrtime) call (a length 2
+array of numbers). This method also keeps track of the count and total time over all calls in an
+interval.
+
+### `panopticon.inc(path, id, n)`
+
+Increments by `n`. If this the first call of inc with this `path` and `id`, then the starting
+value is assumed to be 0.
+
+### `panopticon.set(path, id, value)`
+
+Set a value on a path with id.
