@@ -35,7 +35,7 @@ By default the PID of each worker and the master are logged, as well as the numb
  - `panopticon.set(path, id, n)`, where `n`, a finite number, may replace a previous `n` for this `id`.
  - `panopticon.inc(path, id, n)`, where `n` is added to the previous value if `n` is a finite number. If `n` is not a finite number, then it defaults to `1`.
  - `panopticon.sample(path, id, n)`, which keeps track of the max, min, average and standard deviation of `n` over an interval.
- - `panopticon.timedSample(path, id, dt)`, which is like sample, but takes the output of a high resolution timer `dt` (or rather the difference between two timers).
+ - `panopticon.timedSample(path, id, dt)`, which is like sample, but takes the output of a high resolution timer `dt` (or rather the difference between two timers). It also provides a count and total.
 
 When your application is shutting down, it should call `panopticon.stop()` to clear timers.
 

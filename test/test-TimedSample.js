@@ -19,6 +19,8 @@ exports['check single timed sample after parse without persist'] = function (tes
 			max: 1000,
 			sigma: null,
 			average: 1000,
+			count: 1,
+			total: 1000,
 			scaleFactor: 1,
 			timeStamp: now
 		}
@@ -40,6 +42,8 @@ exports['check single timed sample after parse with persist'] = function (test) 
 			max: 1000,
 			sigma: null,
 			average: 1000,
+			count: 1,
+			total: 1000,
 			scaleFactor: 1,
 			timeStamp: now
 		}
@@ -62,6 +66,8 @@ exports['check two timed samples after parse with persist'] = function (test) {
 			max: 1000,
 			sigma: 0,
 			average: 1000,
+			count: 2,
+			total: 2000,
 			scaleFactor: 1,
 			timeStamp: next
 		}
@@ -83,6 +89,8 @@ exports['check parse after reset'] = function (test) {
 			max: null,
 			sigma: null,
 			average: null,
+			count: 0,
+			total: 0,
 			scaleFactor: 1,
 			timeStamp: now
 		}
@@ -107,6 +115,8 @@ exports['check parse after reset and two samples'] = function (test) {
 			max: 1000,
 			sigma: 0,
 			average: 1000,
+			count: 2,
+			total: 2000,
 			scaleFactor: 1,
 			timeStamp: now
 		}
