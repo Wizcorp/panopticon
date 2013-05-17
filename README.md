@@ -129,11 +129,32 @@ Panopticon was something of an experiment in using node.js module architecture b
 
 Instances are event emitters.
 
-### `Panopticon.count`
+### `Panopticon.registerMethod(name, loggerClass, validator)`
+
+This class method allows the extension of Panopticon methods with a new logger class. This is used
+internally by Panopticon, but it is also part of the public API. `loggerClass` receives the
+arguments:
+
+ - `val`: The initial data point to be logged.
+ - `timeStamp`: A time stamp number.
+ - `persistObj`: An event emitter. If it is not falsy, you should expect it to emit `'reset'` events with a time stamp.
+ - `scaleFactor`: You may optionally ignore this value since it may not be relevant.
+ - `interval`: The interval time over which a data point counts. You may ignore this if it is not relevant.
+
+Instances of the loggerClass must have the following methods:
+
+ - `update(val, timeStamp)`: Add a new data point with a timeStamp.
+ - `reset(timeStamp)`: Resets the state of the logger instance. If `persistObj` was given to the constructor then your constructor must register a listener on `persistObj` for the event `'reset'` that should call this method.
+ - `toJSON`: This function should perform any final processing before serialization, and return an object.
+
+The validator will receive single data points and should return true if they are valid, and false
+if not. Invalid points are simply ignored.
+
+### `Panopticon.count()`
 
 Returns the number of panopticon instances that have been started. Useful for testing.
 
-### `Panopticon._reset`
+### `Panopticon._reset()`
 
 Resets the count of instances. Strictly for testing use only. Do not use this.
 
