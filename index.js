@@ -62,34 +62,6 @@ util.inherits(Panopticon, EventEmitter);
 
 
 /**
- * Class method to allow new loggers to be registered.
- *
- * @param {String}   name        Name of the logger method.
- * @param {Function} loggerClass A constructor function that conforms to the panopticon logger API.
- * @param {Function} [validator] A function that screens datapoints. It must return true for valid.
- */
-
-Panopticon.registerMethod = function (name, loggerClass, validator) {
-	if (Panopticon.hasOwnProperty(name)) {
-		throw new Error('Method ' + name + ' is already registered.');
-	}
-
-	Panopticon.prototype[name] = function (path, id, dataPoint) {
-		if (validator && !validator(dataPoint)) {
-			return;
-		}
-
-		augment(this, loggerClass, path, id, dataPoint);
-	};
-};
-
-// Register build in logger methods.
-Panopticon.registerMethod('sample', SampleLog, Number.isFinite);
-Panopticon.registerMethod('timedSample', TimedSampleLog, Array.isArray);
-Panopticon.registerMethod('inc', IncLog);
-Panopticon.registerMethod('set', SetLog);
-
-/**
  * Clears the interval and the timeout. Removes listeners on a panopticon.
  */
 
@@ -107,6 +79,35 @@ Panopticon.prototype.stop = function () {
 	clearTimeout(this.timer);
 	this.timer = null;
 };
+
+
+/**
+ * Class method to allow new loggers to be registered.
+ *
+ * @param {String}   name        Name of the logger method.
+ * @param {Function} loggerClass A constructor function that conforms to the panopticon logger API.
+ * @param {Function} [validator] A function that screens datapoints. It must return true for valid.
+ */
+
+Panopticon.registerMethod = function (name, loggerClass, validator) {
+	if (Panopticon.prototype.hasOwnProperty(name)) {
+		throw new Error('Method ' + name + ' is already registered.');
+	}
+
+	Panopticon.prototype[name] = function (path, id, dataPoint) {
+		if (validator && !validator(dataPoint)) {
+			return;
+		}
+
+		augment(this, loggerClass, path, id, dataPoint);
+	};
+};
+
+// Register build in logger methods.
+Panopticon.registerMethod('sample', SampleLog, Number.isFinite);
+Panopticon.registerMethod('timedSample', TimedSampleLog, Array.isArray);
+Panopticon.registerMethod('inc', IncLog);
+Panopticon.registerMethod('set', SetLog);
 
 
 /**
