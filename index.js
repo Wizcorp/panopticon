@@ -91,7 +91,7 @@ Panopticon.prototype.stop = function () {
 
 Panopticon.registerMethod = function (name, loggerClass, validator) {
 	if (Panopticon.prototype.hasOwnProperty(name)) {
-		throw new Error('Method ' + name + ' is already registered.');
+		throw new Error('Method "' + name + '" is already registered.');
 	}
 
 	Panopticon.prototype[name] = function (path, id, dataPoint) {
