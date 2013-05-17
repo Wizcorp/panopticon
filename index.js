@@ -62,67 +62,32 @@ util.inherits(Panopticon, EventEmitter);
 
 
 /**
- * Take a sample for which the min, max, average and standard deviation are relevant and calculate
- * these before insertion into the workerData object.
+ * Class method to allow new loggers to be registered.
  *
- * @param {String[]} path Addresses the data object, with each element down a level from the one before it.
- * @param {String} id A key to assign data to within the address defined by path.
- * @param {Number} n The number to sample.
+ * @param {String}   name        Name of the logger method.
+ * @param {Function} loggerClass A constructor function that conforms to the panopticon logger API.
+ * @param {Function} [validator] A function that screens datapoints. It must return true for valid.
  */
 
-Panopticon.prototype.sample = function (path, id, n) {
-	if (!Number.isFinite(n)) {
-		return;
+Panopticon.registerMethod = function (name, loggerClass, validator) {
+	if (Panopticon.hasOwnProperty(name)) {
+		throw new Error('Method ' + name + ' is already registered.');
 	}
 
-	augment(this, SampleLog, path, id, n);
+	Panopticon.prototype[name] = function (path, id, dataPoint) {
+		if (validator && !validator(dataPoint)) {
+			return;
+		}
+
+		augment(this, loggerClass, path, id, dataPoint);
+	};
 };
 
-
-/**
- * Use the Δt array representing the difference between two readings process.hrtime():
- * var diff = process.hrtime(start);
- *
- * @param {String[]} path Addresses the data object, with each element down a level from the one before it.
- * @param {String} id A key to assign data to within the address defined by path.
- * @param {Number[]} dt Output from process.hrtime().
- */
-
-Panopticon.prototype.timedSample = function (path, id, dt) {
-	if (!Array.isArray(dt)) {
-		return;
-	}
-
-	augment(this, TimedSampleLog, path, id, dt);
-};
-
-
-/**
- * Take a counter and increment by n if given or 1. Set up the counter if it does not already exist
- * as a field in the workerData object.
- *
- * @param {String[]} path Addresses the data object, with each element down a level from the one before it.
- * @param {String} id A key to assign data to within the address defined by path.
- * @param {Number} n Increment the addressed data by n. If this is the initial increment, treat the addressed data as 0.
- */
-
-Panopticon.prototype.inc = function (path, id, n) {
-	augment(this, IncLog, path, id, n);
-};
-
-
-/**
- * Create or overwrite a field in the workerData object.
- *
- * @param {String[]} path Addresses the data object, with each element down a level from the one before it.
- * @param {String} id A key to assign data to.
- * @param n Data to set. This is not restricted to numbers.
- */
-
-Panopticon.prototype.set = function (path, id, n) {
-	augment(this, SetLog, path, id, n);
-};
-
+// Register build in logger methods.
+Panopticon.registerMethod('sample', SampleLog, Number.isFinite);
+Panopticon.registerMethod('timedSample', TimedSampleLog, Array.isArray);
+Panopticon.registerMethod('inc', IncLog);
+Panopticon.registerMethod('set', SetLog);
 
 /**
  * Clears the interval and the timeout. Removes listeners on a panopticon.
@@ -153,6 +118,7 @@ Panopticon.prototype.stop = function () {
 Panopticon.count = function () {
 	return instanceCount;
 };
+
 
 /**
  * Used for unit testing to reset the panopticon count. DO NOT USE.
