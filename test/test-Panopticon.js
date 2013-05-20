@@ -283,3 +283,47 @@ exports['bad timed sample should add no data'] = function (test) {
 		test.done();
 	});
 };
+
+exports['get the list of registered functions'] = function (test) {
+	test.expect(5);
+
+	var methods = Panopticon.getMethods();
+
+	test.strictEqual(methods.length, 4);
+	test.notStrictEqual(methods.indexOf('sample'), -1);
+	test.notStrictEqual(methods.indexOf('timedSample'), -1);
+	test.notStrictEqual(methods.indexOf('inc'), -1);
+	test.notStrictEqual(methods.indexOf('set'), -1);
+
+	test.done();
+};
+
+exports['attempting to overwrite prototype property with a registration should throw'] = function (test) {
+	test.expect(1);
+
+	test.throws(function () {
+		Panopticon.registerMethod('stop', function () {});
+	});
+
+	test.done();
+};
+
+exports['attempting to overwrite a registered method with a registration should throw'] = function (test) {
+	test.expect(1);
+
+	test.throws(function () {
+		Panopticon.registerMethod('sample', function () {});
+	});
+
+	test.done();
+};
+
+exports['attempting to register a non-function method should throw'] = function (test) {
+	test.expect(1);
+
+	test.throws(function () {
+		Panopticon.registerMethod('hello', null);
+	});
+
+	test.done();
+};
