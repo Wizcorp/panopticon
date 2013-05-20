@@ -16,6 +16,9 @@ var TimedSampleLog = require('./lib/TimedSample');
 // in parallel without master panoptica getting messages from multiple panoptica on each worker.
 var instanceCount = 0;
 
+// Registered methods.
+var registeredMethods = [];
+
 // Load the private methods.
 var augment       = require('./private/augment');
 var genericSetup  = require('./private/genericSetup');
@@ -90,9 +93,19 @@ Panopticon.prototype.stop = function () {
  */
 
 Panopticon.registerMethod = function (name, loggerClass, validator) {
-	if (Panopticon.prototype.hasOwnProperty(name)) {
+	if (registeredMethods.indexOf(name) !== -1) {
 		throw new Error('Method "' + name + '" is already registered.');
 	}
+
+	if (Panopticon.prototype.hasOwnProperty(name)) {
+		throw new Error('Method "' + name + '" is already a panopticon prototype property.');
+	}
+
+	if (typeof loggerClass !== 'function') {
+		throw new Error('loggerClass must be a constructor function.');
+	}
+
+	registeredMethods.push(name);
 
 	Panopticon.prototype[name] = function (path, id, dataPoint) {
 		if (validator && !validator(dataPoint)) {
@@ -103,11 +116,22 @@ Panopticon.registerMethod = function (name, loggerClass, validator) {
 	};
 };
 
-// Register build in logger methods.
+// Register built in logger methods.
 Panopticon.registerMethod('sample', SampleLog, Number.isFinite);
 Panopticon.registerMethod('timedSample', TimedSampleLog, Array.isArray);
 Panopticon.registerMethod('inc', IncLog);
 Panopticon.registerMethod('set', SetLog);
+
+
+/**
+ * Static method that returns a copy of the internal array of registered method names.
+ *
+ * @return {Array} A list of registered panopticon methods.
+ */
+
+Panopticon.getMethods = function () {
+	return registeredMethods.slice();
+};
 
 
 /**
