@@ -108,11 +108,9 @@ Panopticon.registerMethod = function (name, loggerClass, validator) {
 	registeredMethods.push(name);
 
 	Panopticon.prototype[name] = function (path, id, dataPoint) {
-		if (validator && !validator(dataPoint)) {
-			return;
+		if (!validator || validator(dataPoint)) {
+			augment(this, loggerClass, path, id, dataPoint);
 		}
-
-		augment(this, loggerClass, path, id, dataPoint);
 	};
 };
 
