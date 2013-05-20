@@ -150,6 +150,10 @@ Instances of the loggerClass must have the following methods:
 The validator will receive single data points and should return true if they are valid, and false
 if not. Invalid points are simply ignored.
 
+### `Panopticon.getMethods()`
+
+Returns a copy of an array which lists registered method names.
+
 ### `Panopticon.count()`
 
 Returns the number of panopticon instances that have been started. Useful for testing.
