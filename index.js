@@ -16,6 +16,9 @@ var TimedSampleLog = require('./lib/TimedSample');
 // in parallel without master panoptica getting messages from multiple panoptica on each worker.
 var instanceCount = 0;
 
+// Registered methods.
+var registeredMethods = [];
+
 // Load the private methods.
 var augment       = require('./private/augment');
 var genericSetup  = require('./private/genericSetup');
@@ -40,6 +43,12 @@ var workerSetup   = require('./private/workerSetup');
  */
 
 function Panopticon(startTime, name, interval, scaleFactor, persist, transformer) {
+	var isInstance = this instanceof Panopticon;
+
+	if (!isInstance) {
+		return new Panopticon(startTime, name, interval, scaleFactor, persist, transformer);
+	}
+
 	EventEmitter.call(this);
 	this.id = instanceCount;
 	instanceCount += 1;
@@ -59,69 +68,6 @@ function Panopticon(startTime, name, interval, scaleFactor, persist, transformer
 }
 
 util.inherits(Panopticon, EventEmitter);
-
-
-/**
- * Take a sample for which the min, max, average and standard deviation are relevant and calculate
- * these before insertion into the workerData object.
- *
- * @param {String[]} path Addresses the data object, with each element down a level from the one before it.
- * @param {String} id A key to assign data to within the address defined by path.
- * @param {Number} n The number to sample.
- */
-
-Panopticon.prototype.sample = function (path, id, n) {
-	if (!Number.isFinite(n)) {
-		return;
-	}
-
-	augment(this, SampleLog, path, id, n);
-};
-
-
-/**
- * Use the Δt array representing the difference between two readings process.hrtime():
- * var diff = process.hrtime(start);
- *
- * @param {String[]} path Addresses the data object, with each element down a level from the one before it.
- * @param {String} id A key to assign data to within the address defined by path.
- * @param {Number[]} dt Output from process.hrtime().
- */
-
-Panopticon.prototype.timedSample = function (path, id, dt) {
-	if (!Array.isArray(dt)) {
-		return;
-	}
-
-	augment(this, TimedSampleLog, path, id, dt);
-};
-
-
-/**
- * Take a counter and increment by n if given or 1. Set up the counter if it does not already exist
- * as a field in the workerData object.
- *
- * @param {String[]} path Addresses the data object, with each element down a level from the one before it.
- * @param {String} id A key to assign data to within the address defined by path.
- * @param {Number} n Increment the addressed data by n. If this is the initial increment, treat the addressed data as 0.
- */
-
-Panopticon.prototype.inc = function (path, id, n) {
-	augment(this, IncLog, path, id, n);
-};
-
-
-/**
- * Create or overwrite a field in the workerData object.
- *
- * @param {String[]} path Addresses the data object, with each element down a level from the one before it.
- * @param {String} id A key to assign data to.
- * @param n Data to set. This is not restricted to numbers.
- */
-
-Panopticon.prototype.set = function (path, id, n) {
-	augment(this, SetLog, path, id, n);
-};
 
 
 /**
@@ -145,6 +91,54 @@ Panopticon.prototype.stop = function () {
 
 
 /**
+ * Class method to allow new loggers to be registered.
+ *
+ * @param {String}   name        Name of the logger method.
+ * @param {Function} loggerClass A constructor function that conforms to the panopticon logger API.
+ * @param {Function} [validator] A function that screens datapoints. It must return true for valid.
+ */
+
+Panopticon.registerMethod = function (name, loggerClass, validator) {
+	if (registeredMethods.indexOf(name) !== -1) {
+		throw new Error('Method "' + name + '" is already registered.');
+	}
+
+	if (Panopticon.prototype.hasOwnProperty(name)) {
+		throw new Error('Method "' + name + '" is already a panopticon prototype property.');
+	}
+
+	if (typeof loggerClass !== 'function') {
+		throw new Error('loggerClass must be a constructor function.');
+	}
+
+	registeredMethods.push(name);
+
+	Panopticon.prototype[name] = function (path, id, dataPoint) {
+		if (!validator || validator(dataPoint)) {
+			augment(this, loggerClass, path, id, dataPoint);
+		}
+	};
+};
+
+// Register built in logger methods.
+Panopticon.registerMethod('sample', SampleLog, Number.isFinite);
+Panopticon.registerMethod('timedSample', TimedSampleLog, Array.isArray);
+Panopticon.registerMethod('inc', IncLog);
+Panopticon.registerMethod('set', SetLog);
+
+
+/**
+ * Static method that returns a copy of the internal array of registered method names.
+ *
+ * @return {Array} A list of registered panopticon methods.
+ */
+
+Panopticon.getLoggerMethodNames = function () {
+	return registeredMethods.slice();
+};
+
+
+/**
  * Static method returns the number of panoptica instances.
  *
  * @return {Number}
@@ -153,6 +147,7 @@ Panopticon.prototype.stop = function () {
 Panopticon.count = function () {
 	return instanceCount;
 };
+
 
 /**
  * Used for unit testing to reset the panopticon count. DO NOT USE.

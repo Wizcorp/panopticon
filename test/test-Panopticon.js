@@ -10,7 +10,7 @@ exports['test count static method'] = function (test) {
 	var panoptica = [];
 	var count = 10;
 
-	for (var i = 0; i < count; i++) {
+	for (var i = 0; i < count; i += 1) {
 		panoptica.push(new Panopticon(now, i, 1000, 1, null, null));
 	}
 
@@ -31,7 +31,7 @@ exports['check correct addition and subtraction of listeners on cluster'] = func
 
 	var initialListeners = cluster.listeners('fork').length;
 
-	for (var i = 0; i < count; i++) {
+	for (var i = 0; i < count; i += 1) {
 		panoptica.push(new Panopticon(now, i, 1000, 1, null, null));
 	}
 
@@ -222,7 +222,7 @@ exports['try cluster'] = function (test) {
 
 	panopticon.on('delivery', function (data) {
 		if (count !== 1) {
-			count++;
+			count += 1;
 			return;
 		}
 
@@ -282,4 +282,61 @@ exports['bad timed sample should add no data'] = function (test) {
 		test.strictEqual(JSON.stringify(data.data.master), '{}');
 		test.done();
 	});
+};
+
+exports['get the list of registered functions'] = function (test) {
+	test.expect(5);
+
+	var methods = Panopticon.getLoggerMethodNames();
+
+	test.strictEqual(methods.length, 4);
+	test.notStrictEqual(methods.indexOf('sample'), -1);
+	test.notStrictEqual(methods.indexOf('timedSample'), -1);
+	test.notStrictEqual(methods.indexOf('inc'), -1);
+	test.notStrictEqual(methods.indexOf('set'), -1);
+
+	test.done();
+};
+
+exports['attempting to overwrite prototype property with a registration should throw'] = function (test) {
+	test.expect(1);
+
+	test.throws(function () {
+		Panopticon.registerMethod('stop', function () {});
+	});
+
+	test.done();
+};
+
+exports['attempting to overwrite a registered method with a registration should throw'] = function (test) {
+	test.expect(1);
+
+	test.throws(function () {
+		Panopticon.registerMethod('sample', function () {});
+	});
+
+	test.done();
+};
+
+exports['attempting to register a non-function method should throw'] = function (test) {
+	test.expect(1);
+
+	test.throws(function () {
+		Panopticon.registerMethod('hello', null);
+	});
+
+	test.done();
+};
+
+exports['forgetting \'new\' should be ok'] = function (test) {
+	/* jshint newcap: false */
+	test.expect(1);
+
+	var panopticon = Panopticon(now, 'noName', 1000, 1, null, null);
+	test.ok(panopticon instanceof Panopticon);
+
+	// Need to call stop to cancel event listeners.
+	panopticon.stop();
+
+	test.done();
 };
