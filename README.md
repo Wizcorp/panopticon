@@ -137,7 +137,7 @@ arguments:
 
  - `val`: The initial data point to be logged.
  - `timeStamp`: A time stamp number.
- - `persistObj`: An event emitter. If it is not falsy, you should expect it to emit `'reset'` events with a time stamp.
+ - `persistObj`: An optional event emitter. If it is not falsy, you should expect it to emit `'reset'` events with a time stamp.
  - `scaleFactor`: You may optionally ignore this value since it may not be relevant.
  - `interval`: The interval time over which a data point counts. You may ignore this if it is not relevant.
 
@@ -150,7 +150,7 @@ Instances of the loggerClass must have the following methods:
 The validator will receive single data points and should return true if they are valid, and false
 if not. Invalid points are simply ignored.
 
-### `Panopticon.getMethods()`
+### `Panopticon.getLoggerMethodNames()`
 
 Returns a copy of an array which lists registered method names.
 

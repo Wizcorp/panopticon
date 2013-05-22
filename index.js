@@ -43,6 +43,10 @@ var workerSetup   = require('./private/workerSetup');
  */
 
 function Panopticon(startTime, name, interval, scaleFactor, persist, transformer) {
+	if (this.constructor !== Panopticon) {
+		return new Panopticon(startTime, name, interval, scaleFactor, persist, transformer);
+	}
+
 	EventEmitter.call(this);
 	this.id = instanceCount;
 	instanceCount += 1;
@@ -127,7 +131,7 @@ Panopticon.registerMethod('set', SetLog);
  * @return {Array} A list of registered panopticon methods.
  */
 
-Panopticon.getMethods = function () {
+Panopticon.getLoggerMethodNames = function () {
 	return registeredMethods.slice();
 };
 
