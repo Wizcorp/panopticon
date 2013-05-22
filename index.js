@@ -43,7 +43,9 @@ var workerSetup   = require('./private/workerSetup');
  */
 
 function Panopticon(startTime, name, interval, scaleFactor, persist, transformer) {
-	if (this.constructor !== Panopticon) {
+	var isInstance = this instanceof Panopticon;
+
+	if (!isInstance) {
 		return new Panopticon(startTime, name, interval, scaleFactor, persist, transformer);
 	}
 
