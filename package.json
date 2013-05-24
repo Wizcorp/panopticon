@@ -1,6 +1,6 @@
 {
   "name": "panopticon",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "description": "Data acquisition for applications that use the cluster module.",
   "contributors": [ 
     { "name": "Mark Stanley Everitt", "email": "meveritt@wizcorp.jp" },
@@ -8,9 +8,9 @@
   ],
   "main": "index.js",
   "devDependencies": {
-    "nodeunit": "0.7.x",
+    "nodeunit": "0.8.x",
     "istanbul": "0.1.x",
-    "jshint": "1.1.x"
+    "jshint": "2.1.x"
   },
   "directories": {
     "test": "test"

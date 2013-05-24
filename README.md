@@ -8,7 +8,15 @@ Panopticon exposes a constructor. Instances live across the cluster, and expose 
 
 In order to minimise parsing load due to interprocess communication, data is sub-aggregated on each worker/master for an interval, and then forwarded to the master for final aggregation, reducing the parsing load to a single object per machine per instance, rather than parsing a small object for every sample taken.
 
-Panopticon has no production dependencies!
+Panopticon has no production dependencies! [Find it on npm](https://npmjs.org/package/panopticon).
+
+## Install
+
+Panopticon is 100% JavaScript with no production dependencies. Simply install with:
+
+```bash
+npm install panopticon
+```
 
 ## Usage
 
