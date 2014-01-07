@@ -31,22 +31,25 @@ var workerSetup   = require('./private/workerSetup');
  * The constructor for Panopticon. Handles the differences between master and worker processes.
  * Please refer to the README for more information.
  *
- * @param {Number} startTime Time in milliseconds elapsed since 1 January 1970 00:00:00 UTC.
- * @param {String} name The name of the panopticon being constructed.
- * @param {Number} interval Interval time in milliseconds.
- * @param {Number} [scaleFactor] 1 -> kHz, 1000 -> Hz. If no positive finite number is given, defaults to 1.
- * @param {Boolean} [persist] Keep a logger once initialised. Each interval reset it.
- * @param {Function} [transformer] A custom function to transform data before merging with the aggregate.
+ * @param {Object}   options               The configuration object.
+ * @param {Number}   options.startTime     Time in ms elapsed since 1 January 1970 00:00:00 UTC.
+ * @param {String}   options.name          The name of the panopticon being constructed.
+ * @param {Number}   options.interval      Interval time in milliseconds.
+ * @param {Number}   [options.scaleFactor] 1 -> kHz, 1000 -> Hz. If no positive finite number is
+ *                                         given, defaults to 1.
+ * @param {Boolean}  [options.persist]     Keep a logger once initialized. Each interval reset it.
+ * @param {Function} [options.transformer] A custom function to transform data before merging with
+ *                                         the aggregate.
  * @constructor
  * @extends EventEmitter
  * @alias module:Panopticon
  */
 
-function Panopticon(startTime, name, interval, scaleFactor, persist, transformer) {
+function Panopticon(options) {
 	var isInstance = this instanceof Panopticon;
 
 	if (!isInstance) {
-		return new Panopticon(startTime, name, interval, scaleFactor, persist, transformer);
+		return new Panopticon(options);
 	}
 
 	EventEmitter.call(this);
@@ -54,7 +57,7 @@ function Panopticon(startTime, name, interval, scaleFactor, persist, transformer
 	instanceCount += 1;
 
 	// First we sort out the methods and data which handle are local to this process.
-	genericSetup(this, name, startTime, interval, scaleFactor, persist, transformer);
+	genericSetup(this, options);
 
 	// If the process is a worker, we only need to send the master results then return. If the
 	// process is not a worker, it is either the master or stand alone. The master also handles

@@ -2,15 +2,15 @@
   "name": "panopticon",
   "version": "0.2.0",
   "description": "Data acquisition for applications that use the cluster module.",
-  "contributors": [ 
-    { "name": "Mark Stanley Everitt", "email": "meveritt@wizcorp.jp" },
-    { "name": "Tom Farmer", "email": "tfarmer@wizcorp.jp"}
+  "contributors": [
+    { "name": "Mark Stanley Everitt", "email": "mark.s.everitt@gmail.com" },
+    { "name": "Tom Farmer", "email": "tfarmer@wizcorp.jp" }
   ],
   "main": "index.js",
   "devDependencies": {
     "nodeunit": "0.8.x",
-    "istanbul": "0.1.x",
-    "jshint": "2.1.x"
+    "istanbul": "~0.2.3",
+    "jshint": "~2.4.1"
   },
   "directories": {
     "test": "test"
@@ -33,5 +33,35 @@
   "author": "Wizcorp, Inc. <info@wizcorp.jp>",
   "license": "MIT",
   "readmeFilename": "README.md",
-  "homepage": "http://documentup.com/Wizcorp/panopticon"
+  "homepage": "http://documentup.com/Wizcorp/panopticon",
+  "jshintConfig": {
+    "bitwise": true,
+    "camelcase": true,
+    "curly": true,
+    "eqeqeq": true,
+    "forin": false,
+    "immed": true,
+    "indent": 4,
+    "latedef": true,
+    "newcap": true,
+    "noarg": true,
+    "noempty": true,
+    "nonew": true,
+    "plusplus": false,
+    "quotmark": "single",
+    "undef": true,
+    "unused": true,
+    "strict": true,
+    "trailing": true,
+    "maxparams": 5,
+    "maxdepth": 3,
+    "maxstatements": 15,
+    "maxcomplexity": 11,
+    "maxlen": 100,
+    "smarttabs": true,
+    "node": true,
+    "browser": true,
+    "esnext": true,
+    "strict": false
+  }
 }

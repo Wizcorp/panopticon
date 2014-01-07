@@ -29,14 +29,16 @@ var Panopticon = require('panopticon');
 Panopticon itself is a constructor, so when you're ready to start it, make a new object
 
 ```javascript
-var panopticon = new Panopticon(startTime, name, interval, scaleFactor, persist, transformer);
+var panopticon = new Panopticon(options);
 ```
 
-where `startTime` (ms since the unix epoch) is an optional time to start from, `interval` is the time delay (in ms) between batches of data and `scaleFactor` scales the reporting from some of the reporter types. If no `startTime` is provided, then it defaults to `0`. Similarly, if no sane `interval` is provided, it defaults to 10 seconds. By default the scale of reporting is in kilohertz. `persist` is a boolean, and tells the panopticon if it should be keeping data paths around after each interval.
+`options` is an object with fields: `startTime`, `name`, `interval`, `scaleFactor`, `persist`, `transformer`
+
+`startTime` (ms since the unix epoch) is an optional time to start from, `interval` is the time delay (in ms) between batches of data and `scaleFactor` scales the reporting from some of the reporter types. If no `startTime` is provided, then it defaults to `0`. Similarly, if no sane `interval` is provided, it defaults to 10 seconds. By default the scale of reporting is in kilohertz. `persist` is a boolean, and tells the panopticon if it should be keeping data paths around after each interval.
 
 The `startTime`, if used, must be the same across your cluster. This is simple to manage using the optional environment  argument to `cluster.fork`. i.e. the master can use `startTime = Date.now()`, and pass this value to the forked workers with `cluster.fork({ START_TIME: startTime })`. If not used (undefined or otherwise falsy) then it defaults to 0, so the first interval will be short, but all workers will have the same starting point without communicating a value. A modulo function is used internally to calculate when the current interval ends, so there is no additional cost associated with starting from 0.
 
-If no value is passed in for `scaleFactor`, it defaults to `1` (reports in kHz). Panopticon internally calculates the rate of increments, so it needs to be told if this scale is wrong. For example, to change the reporting of incrementers and timed samples to Hz, set this value to 1000. This only affects incrementers and timed samples, since these are concerned with timing. Sets and samples are your responsibility, so if these should be reporting in something other than kHz for those, then you must give the panopticon the data in the scale desired.
+If no value is passed in for `scaleFactor`, it defaults to `1` (reports in kHz). Panopticon internally calculates the rate of increments, so it needs to be told if this scale is wrong. For example, to change the reporting of incrementers and timed samples to Hz, set this value to `1000`. This only affects incrementers and timed samples, since these are concerned with timing. Sets and samples are your responsibility, so if these should be reporting in something other than kHz for those, then you must give the panopticon the data in the scale desired.
 
 By default the PID of each worker and the master are logged, as well as the number of workers (not including the master). Everything else needs to be sent to the panopticon object using one of its acquisition methods. In each case the `id` is the identifier that should be associated with this piece of data, and path is an array of strings representing subkeys in descending order. The methods are
 
