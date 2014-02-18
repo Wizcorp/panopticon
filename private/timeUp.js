@@ -2,8 +2,8 @@ var resetData = require('./resetData');
 
 
 /**
- * Every time a sample is taken, or panopticon.timer fires, this function checks if it is time to emit
- * a sample yet (and reset after emission), and to reset panopticon.timer if needed.
+ * Every time a sample is taken, or panopticon.timer fires, this function checks if it is time to
+ * emit a sample yet (and reset after emission), and to reset panopticon.timer if needed.
  *
  * @param {Object} panopticon The scope to operate on.
  * @private
