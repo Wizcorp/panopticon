@@ -6,8 +6,13 @@ var Panopticon = require(__dirname + '/../../');
 // Use the start time from the master process to synchronise the multiprocess panopticon.
 var start = process.argv[2];
 
-var panopticon = new Panopticon(start, 'testSet', 100, 1, true, null);
+var panopticon = new Panopticon({
+	startTime: start,
+	name: 'testSet',
+	interval: 100,
+	scaleFactor: 1,
+	persist: true,
+});
 
 panopticon.set([], 'my name is', 'slim shady');
 panopticon.inc([], 'testInc', 1);
-
