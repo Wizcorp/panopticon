@@ -1,6 +1,6 @@
 {
   "name": "panopticon",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Data acquisition for applications that use the cluster module.",
   "contributors": [
     { "name": "Mark Stanley Everitt", "email": "mark.s.everitt@gmail.com" },
